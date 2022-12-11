@@ -1,4 +1,4 @@
-from api import API
+from usb.api import API
 
 
 class SocketEndpoint():

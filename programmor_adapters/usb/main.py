@@ -69,6 +69,10 @@ def main():
     socket = SocketEndpoint(api)
     rest = RestEndpoint(api)
 
+    # TEst
+    print(api.get_devices())
+    
+
 
 if __name__ == "__main__":
     main()

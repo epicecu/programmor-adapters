@@ -5,9 +5,23 @@ from typing import List, Any
 from shared.interface import Comm, Frame
 
 try:  # noqa: E722
-    import hid
+    import hid # Linux
+except Exception as e:
+    print("Failled to import HID library, install required binaries for your system")
+    print(e)
+
+try:  # noqa: E722
+    import pywinusb.hid as hid # Windows
+    def enumerate() -> any:
+        device_strings: List[str] = list()
+        devices = hid.HidDeviceFilter().get_devices()
+        for device in devices:
+            device_strings.append(device.path)
+        return device_strings
+    hid.enumerate = enumerate
 except Exception:
     print("Failled to import HID library, install required binaries for your system")
+
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +38,7 @@ class USB(Comm):
         all_devices: List = hid.enumerate()
         compatible_devices: List[str] = list()
         for device in all_devices:
-            if self.check_programmor_compatible_device(device['path']):
+            if self.check_device_compatibility(device['path']):
                 compatible_devices.append(device['path'])
         return compatible_devices
 

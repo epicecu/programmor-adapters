@@ -1,4 +1,4 @@
-from main import main
+from usb.main import main
 
 
 # Run Application

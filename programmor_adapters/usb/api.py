@@ -24,7 +24,8 @@ class API():
 
     # Get a list of connected Programmor compatiable device ids
     def get_devices(self) -> List[str]:
-        return USB.get_device_paths()
+        usb = USB()
+        return usb.get_device_paths()
 
     def get_device(self, path: str) -> USB:
         # Check if device is in the list of connections
