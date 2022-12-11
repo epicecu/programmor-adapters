@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+// TransactionMessage
+message TransactionMessage {
+    enum Action {
+        NA = 0;
+        COMMON = 1;
+        REQUEST = 2;
+        PUBLISH = 3;
+        RESPONSE = 4;
+    }
+
+    fixed32 token = 1; // Unique token id, token will be identical to request for response
+    Action action = 2;
+    fixed32 shareId = 3; // Requested Share data
+    fixed32 dataLength = 4; // The length of data from a possible 64 bytes
+    bytes data = 5; // Byte Array
+}
+
+// Common between all devices compatiable with Programmor
+message Common1 { // General device params
+    fixed32 id = 1; // Local id for device
+    fixed32 registryId = 2; // Global id; Register with Programmor.com/register-device
+    fixed32 serialNumber = 3; // Device serial number
+    fixed32 sharesVersion = 4; // Shares verison used in device 
+    fixed32 firmwareVersion = 5; // Firmware version
+    string deviceName = 6; // Human readable device name; Max 32 bytes 
+}

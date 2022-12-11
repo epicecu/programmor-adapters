@@ -1,0 +1,8 @@
+flake8
+tox
+pytest
+pytest-cov
+mypy
+autopep8
+Sphinx
+rinohtype
