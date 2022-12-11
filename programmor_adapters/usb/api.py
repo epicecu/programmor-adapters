@@ -26,9 +26,16 @@ class API():
     def get_devices(self) -> List[str]:
         return USB.get_device_paths()
 
+    def get_device(self, path: str) -> USB:
+        # Check if device is in the list of connections
+        return self.connections.get(path, None)
+
+    def check_device(self, path: str) -> bool:
+        return self.get_device(path) == None 
+
     # Connect to a USB device
     def connect_device(self, path: str) -> bool:
-        if path in self.connections:
+        if self.check_device(path):
             return False
         # Create USB Connection and connect
         self.connections[path] = USB()
@@ -37,7 +44,7 @@ class API():
 
     # Disconnect from a USB device
     def disconnect_device(self, path: str) -> None:
-        if path not in self.connections:
+        if not self.check_device(path):
             return
         # Close connection and delete
         self.connections[path].close()
@@ -45,21 +52,24 @@ class API():
 
     # Request shareid
     def request_share(self, path: str, shareId: int) -> bytes:
-        if path not in self.connections:
+        device = self.get_device(path)
+        if device == None:
             return bytes()
         # Request share from device
-        data = self._request_message_as_bytes(shareId)
-        self.connections[path].send_message(data)
+        request_message_bytes = self._request_message_as_bytes(shareId)
+        device.send_message(request_message_bytes)
         
     # Publish shareid
     def publish_share(self, path: str, shareId: int, data: bytes) -> None:
-        if path not in self.connections:
+        device = self.get_device(path)
+        if device == None:
             return
         # Publish share to device
-        pass
+        publish_message_bytes = self._publish_message_as_bytes(shareId, data)
+        device.send_message(publish_message_bytes)
 
     # Private Request Message
-    def _request_message(self, shareId: int) -> Any:
+    def _request_message(self, shareId: int) -> transaction_pb2.TransactionMessage:
         requestMessage = transaction_pb2.TransactionMessage()
         requestMessage.token = uuid4().int >> 96
         requestMessage.action = transaction_pb2.TransactionMessage.REQUEST
@@ -73,16 +83,16 @@ class API():
         return self._request_message(shareId).SerializeToString()
 
     # Private Publish Message
-    def _publish_message(self, shareId: int, data: bytes) -> Any:
+    def _publish_message(self, shareId: int, data: bytes) -> transaction_pb2.TransactionMessage:
         publishMessage = transaction_pb2.TransactionMessage()
         publishMessage.token = uuid4().int >> 96
         publishMessage.action = transaction_pb2.TransactionMessage.PUBLISH
         publishMessage.shareId = shareId
         if data is None:
-            return bytes(0)
+            data = bytes(0)
         # Check that the data is DATA_MAX_SIZE bytes or less
         if len(data) > DATA_MAX_SIZE:
-            return bytes(0)
+            data = bytes(0)
         publishMessage.dataLength = len(data)
         publishMessage.data = data + bytes(DATA_MAX_SIZE - len(data))
         # print(publishMessage)
