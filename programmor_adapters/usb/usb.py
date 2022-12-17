@@ -44,7 +44,6 @@ class USB(Comm):
 
     # Checks if this device is a
     def check_device_compatibility(self, path: str) -> bool:
-        result = False
         self.blocking = True
         sleep(0.01)
         # Connect to device
@@ -53,7 +52,7 @@ class USB(Comm):
         except Exception:
             # logger.debug(f"Failed to open device {path}")
             self.blocking = False
-            return result
+            return False
         # Send frame
         frame = Frame()
         frame.preamble = 0x02
@@ -68,13 +67,16 @@ class USB(Comm):
         except Exception:
             logger.debug(f"Not enough returned data {len(response_bytes)}")
             self.blocking = False
-            return result
+            return False
         # Check
-        if response.is_valid():
-            if response.preamble == 0x03:
-                result = True
+        if not response.is_valid():
+            logger.debug(f"Frame CRC not valid")
+            return False
+        if response.preamble != 0x03:
+            logger.debug(f"Frame type incorrect")
+            return False
         self.blocking = False
-        return result
+        return True
 
     def read(self) -> bytes:
         # Return no bytes if device is not ready

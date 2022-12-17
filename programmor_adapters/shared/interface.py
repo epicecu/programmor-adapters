@@ -3,6 +3,7 @@ import threading
 import struct
 import zlib
 import random
+import asyncio
 from math import ceil
 from enum import Enum
 from typing import Callable, Dict, List, Protocol
@@ -15,13 +16,15 @@ FRAME_PAYLOAD_SIZE = 50
 
 
 class ProcessState(Enum):
+    """Communication Interface Process State.
+    """
     OK = 0
     ERROR = 1
 
-# Automotive Frame Protocol (AFP)
-
 
 class Frame:
+    """Automotive Frame Protocol (AFP) Version 1.
+    """
     # Null = 0x00
     # Data packet = 0x01
     # Programmor Compatible Request = 0x02
@@ -105,8 +108,14 @@ class Frame:
 
 # Comm base class.
 class Comm(threading.Thread):
+    """Communication Interface
+    To be extended to support Programmor communication methods, self contained class using 
+    python threading. Supports packetising data into Frames to receive & send to the device.
+    """
 
     def __init__(self) -> None:
+        """Constructor method
+        """
         threading.Thread.__init__(self)
         self.stop_flag: bool = False
         self.blocking: bool = False
@@ -119,21 +128,23 @@ class Comm(threading.Thread):
         self.fn: Callable[[bytes], None] = None
         self.lastMessage: bytes = bytes()
 
-    # Starts the thread
-
     def start(self) -> None:
+        """Starts the thread
+        """
         threading.Thread.start(self)
         logger.info("Starting Comms Thread")
 
-    # Stops the thread
     def stop(self) -> None:
+        """Stops the thread
+        """
         logger.info("Stopping Comms Thread")
         self.stop_flag = True
         self.blocking = True
         self.close()
 
-    # Threading main function
     def run(self) -> None:
+        """Run method used by python threading
+        """
         while True:
             # Stop thread
             if self.stop_flag:
@@ -154,6 +165,11 @@ class Comm(threading.Thread):
             sleep(0.001)  # 1ms
 
     def process_incoming_frames(self) -> ProcessState:
+        """Processes the incoming frames.
+
+        :return: State of the process
+        :rtype: ProcessState
+        """
         # Read data
         data = self.read()
 
@@ -223,7 +239,7 @@ class Comm(threading.Thread):
                             remove_frames.append(frame.frameId)
                             self.lastMessage = message_bytes
                             if self.fn is not None:
-                                self.fn(message_bytes)
+                                self.callback(message_bytes)
 
         # Remove used frame sets
         for setId in remove_frames:
@@ -232,6 +248,11 @@ class Comm(threading.Thread):
         return ProcessState.OK
 
     def process_outgoing_frames(self) -> ProcessState:
+        """Processes the outgoing frames.
+
+        :return: State of the process
+        :rtype: ProcessState
+        """
         # Check if we have data to send
         if self.messages_outgoing.empty():
             return ProcessState.ERROR
@@ -262,34 +283,76 @@ class Comm(threading.Thread):
 
         return ProcessState.OK
 
-    # Send and Receive without threading
-    def send_then_receive_message(self, message_bytes: bytes, wait_s: float = 0.5) -> bytes:
+    async def send_then_receive_message(self, message_bytes: bytes, wait_s: float = 0.5) -> bytes:
+        """Send a message then wait for a response.
+
+        :param message_bytes: Data to send to the device
+        :type message_bytes: bytes
+        :param wait_s: Waiting timeout in seconds
+        :type wait_s: float 
+        :return: Response from the device
+        :rtype: bytes
+        """
         oldMessage = self.lastMessage
         self.messages_outgoing.put(message_bytes)
         startTime = perf_counter()
         while ((perf_counter() - startTime) < wait_s):
-            sleep(0.001)
+            asyncio.sleep(0.001)
             if self.lastMessage != oldMessage:
                 return self.lastMessage
         return bytes(0)
 
-    # Send message to device
     def send_message(self, message_bytes: bytes) -> None:
+        """Send a message to the device.
+
+        :param message_bytes: Message to send as bytes
+        :type message_bytes: bytes
+        """
         self.messages_outgoing.put(message_bytes)
         # instead of a list, simply create the frames and write
 
-    # Function called when a new message has been received
-    def set_received_message_callback(self, fn: Callable[[bytes], None]):
+    def set_received_message_callback(self, fn: Callable[[bytes], None]) -> None:
+        """Set the callback function to be called when a new message 
+        has been received.
+
+        :param message_bytes: Callback function
+        :type message_bytes: Callable()
+        """
         self.fn = fn
 
-    # Read bytes from device
+    def callback(self, message_bytes: bytes) -> None:
+        """To be called on successful response from device.
+
+        :param message_bytes: Message to send as bytes
+        :type message_bytes: bytes
+        """
+        self.fn(message_bytes)
+
+    def is_callback(self) -> bool:
+        """Checks if a callback function is set.
+
+        :return: True or False
+        :rtype: bool
+        """
+        return self.fn is not None
+
     def read(self) -> bytes:
+        """Reads data from the device.
+
+        :return: 64 bytes from the device
+        :rtype: bytes
+        """
         raise NotImplementedError("Read method not implemented")
 
-    # Write bytes to device
     def write(self, buffer: bytes) -> None:
+        """Writes data to the device.
+
+        :return: 64 bytes to the device
+        :rtype: bytes
+        """
         raise NotImplementedError("Write method not implemented")
 
-    # Close device connection
     def close(self) -> None:
+        """Closes connection to the device.
+        """
         raise NotImplementedError("Close method not implemented")

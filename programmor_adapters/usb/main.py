@@ -33,7 +33,7 @@ def main():
     args = parser.parse_args()
 
     # Setup logging
-    logger = logging.getLogger("programmor")
+    logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     format = logging.Formatter("%(asctime)s [%(name)s] [%(threadName)s] [%(levelname)-5.5s] %(message)s")
     
@@ -70,9 +70,13 @@ def main():
     rest = RestEndpoint(api)
 
     # TEst
-    print(api.get_devices())
-    
+    logger.debug(api.get_devices())
 
+    teensy = api.get_devices()[0]
+
+    result = api.connect_device(teensy)
+
+    api.disconnect_device(teensy)
 
 if __name__ == "__main__":
     main()
