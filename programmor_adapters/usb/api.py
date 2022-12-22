@@ -1,7 +1,8 @@
 from usb.usb import USB
-from typing import List, Dict, Any, Protocol
+from typing import List, Dict, Any, Protocol, Callable
 from uuid import uuid4
 from datetime import datetime
+from tinydb import TinyDB, Query
 
 # Transaction Protobuf File
 import usb.proto.transaction_pb2 as transaction_pb2
@@ -14,12 +15,21 @@ logger = logging.getLogger(__name__)
 DATA_MAX_SIZE = 80
 TRANSACTION_MESSAGE_SIZE = 99
 
+"""Developer Notes:
+Tiny DB Reference - https://tinydb.readthedocs.io/en/latest/getting-started.html
+Writing docs - https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html 
+
+"""
+
+
 class Transaction(Protocol):
     """API Tranactions with the device
     """
+    id: int
     device_path: str
-    request_message_token: int
-    response_message_token: int
+    sent_at: datetime
+    received_at: datetime
+    created_at: datetime = datetime.now()
 
 
 class API():
@@ -32,6 +42,9 @@ class API():
         """Constructor method
         """
         self.connections: Dict[str, USB] = dict()
+        self.fns: List[str, Callable[[bytes], None]] = dict()
+        self.transactions: List[Transaction] = list()
+        self.db = TinyDB("usb-db.json")
 
     def get_devices(self) -> List[str]:
         """Returns a list of Programmor compatiable device paths.
@@ -100,7 +113,16 @@ class API():
         if device == None:
             return
         # Request share from device
-        request_message_bytes = self._request_message_as_bytes(shareId)
+        request_message = self._request_message(shareId)
+        # Generate transaction record
+        record = Transaction()
+        record.id = request_message.token
+        record.device_path = path
+        record.sent_at = datetime.now()
+        self.transactions.append(record)
+        # Convert message to bytes
+        request_message_bytes = request_message.SerializeToString()
+        # Send data
         device.send_message(request_message_bytes)
 
     async def request_share_async(self, path: str, shareId: int, timeout_s: float = 1) -> bytes:
@@ -119,7 +141,7 @@ class API():
         if device == None:
             return bytes(0)
         # Request share from device
-        request_message_bytes = self._request_message_as_bytes(shareId)
+        request_message_bytes = self._request_message(shareId).SerializeToString()
         response = transaction_pb2.TransactionMessage()
         try:
             response.ParseFromString(await device.send_then_receive_message(request_message_bytes, timeout_s))
@@ -137,11 +159,21 @@ class API():
         :param data: The share to publish to the device
         :type data: bytes
         """
+        # Check & Fetch device
         device = self.get_device(path)
         if device == None:
             return
-        # Publish share to device
-        publish_message_bytes = self._publish_message_as_bytes(shareId, data)
+        # Generate publish message
+        publish_message = self._publish_message(shareId, data)
+        # Generate transaction record
+        record = Transaction()
+        record.id = publish_message.token
+        record.device_path = path
+        record.sent_at = datetime.now()
+        self.transactions.append(record)
+        # Convert message to bytes
+        publish_message_bytes = publish_message.SerializeToString()
+        # Send data
         device.send_message(publish_message_bytes)
 
     # Private Request Message
@@ -160,18 +192,6 @@ class API():
         requestMessage.dataLength = 1
         requestMessage.data = bytes(DATA_MAX_SIZE)
         return requestMessage
-
-    def _request_message_as_bytes(self, shareId: int) -> bytes:
-        """A Request Message as bytes
-
-        :param shareId: A share id
-        :type shareId: int
-        :return: A transaction message as bytes
-        :rtype: bytes
-        """
-        message: transaction_pb2.TransactionMessage = self._request_message(shareId)
-        # TODO: Store reference to message
-        return message.SerializeToString()
 
     def _publish_message(self, shareId: int, data: bytes) -> transaction_pb2.TransactionMessage:
         """A Publish Message
@@ -196,18 +216,6 @@ class API():
         # print(publishMessage.data.hex(" "))
         return publishMessage
 
-    def _publish_message_as_bytes(self, shareId: int, data: bytes) -> bytes:
-        """A Publish Message as bytes
-
-        :param shareId: A share id
-        :type shareId: int
-        :return: A transaction message as bytes
-        :rtype: bytes
-        """
-        message: transaction_pb2.TransactionMessage = self._publish_message(shareId, data)
-        # TODO: Store reference to message
-        return message.SerializeToString()
-
     def _on_receive(self, path: str, data: bytes) -> None:
         """A Request Message as bytes
 
@@ -221,5 +229,44 @@ class API():
             response.ParseFromString(data)
         except BaseException:
             return
-        
-        #TODO Add response to the reponse pool or callback function?
+        # Confirm the received data is in response of a transaction
+        filtered_transactions = filter(lambda record: record.id == response.token, self.transactions)
+        if len(filtered_transactions) == 0:
+            logger.debug("Could not match received data to a transaction record")
+            #TODO Potentially handle other alt receive modes 
+            return
+        # Update transaction, then remove
+        record: Transaction = filtered_transactions[0]
+        record.received_at = datetime.now()
+        logger.info(record)
+        self.transactions.remove(record)
+        # Save data to database
+        # self.save_data_db(response.data)
+        # Pass data to callback functions
+        self.callback(response.data)
+
+    def register_callback(self, fn: Callable[[bytes], None]) -> None:
+        """Register a receive callback function.
+
+        :param fn: Callback function
+        :type fn: Callable function 
+        """
+        self.fns.append(fn)
+
+    def clear_callback(self):
+        """Clear all the callback functions
+        """
+        self.fns.clear()
+
+    def callback(self, data: bytes) -> None:
+        """Calls all registered callback functions.
+
+        :param data: Return data from the device
+        :type data: bytes
+        """
+        for fn in self.fns:
+            try:
+                # Pass data to callback function
+                fn(data)
+            except:
+                logger.debug("Callback function failed to execute")
