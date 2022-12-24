@@ -38,13 +38,13 @@ class API():
     to package the data into Frames.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, database_storage_location: str = "./usb-db") -> None:
         """Constructor method
         """
         self.connections: Dict[str, USB] = dict()
         self.fns: List[str, Callable[[bytes], None]] = dict()
         self.transactions: List[Transaction] = list()
-        self.db = TinyDB("usb-db.json")
+        self.db = TinyDB(f"{database_storage_location}.json")
 
     def get_devices(self) -> List[str]:
         """Returns a list of Programmor compatiable device paths.
@@ -241,7 +241,7 @@ class API():
         logger.info(record)
         self.transactions.remove(record)
         # Save data to database
-        # self.save_data_db(response.data)
+        self.db.insert({"id": record.id, "action": response.action, "shareId": response.shareId ,"data": response.data, "requestedAt": record.sent_at, "receivedAt": record.received_at})
         # Pass data to callback functions
         self.callback(response.data)
 

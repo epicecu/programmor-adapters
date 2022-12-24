@@ -131,3 +131,5 @@ dmypy.json
 *.code-workspace
 .qt_for_python/
 .vscode/
+
+*.json
