@@ -2,6 +2,7 @@ from usb.usb import USB
 from typing import List, Dict, Any, Protocol, Callable
 from uuid import uuid4
 from datetime import datetime
+import copy
 from tinydb import TinyDB, Query
 
 # Transaction Protobuf File
@@ -42,7 +43,7 @@ class API():
         """Constructor method
         """
         self.connections: Dict[str, USB] = dict()
-        self.fns: List[str, Callable[[bytes], None]] = dict()
+        self.fns: List[str, Callable[[Transaction, bytes], None]] = dict()
         self.transactions: List[Transaction] = list()
         self.db = TinyDB(f"{database_storage_location}.json")
 
@@ -216,6 +217,14 @@ class API():
         # print(publishMessage.data.hex(" "))
         return publishMessage
 
+    def get_messages(self, path:str, to_time: datetime, from_time: datetime, shareId: int) -> list[bytes]:
+        item = Query()
+        items = self.db.search(item.device == path and item.shareId == shareId and item.receivedAt >= to_time and item.receivedAt <= from_time )
+        messages = list()
+        for i in items:
+            messages.append(i.data)
+        return messages
+
     def _on_receive(self, path: str, data: bytes) -> None:
         """A Request Message as bytes
 
@@ -229,27 +238,26 @@ class API():
             response.ParseFromString(data)
         except BaseException:
             return
-        # Confirm the received data is in response of a transaction
-        filtered_transactions = filter(lambda record: record.id == response.token, self.transactions)
+        # Confirm the received data is in response to a transaction
+        filtered_transactions = filter(lambda record: record.id == response.token and record.device_path == path, self.transactions)
         if len(filtered_transactions) == 0:
             logger.debug("Could not match received data to a transaction record")
-            #TODO Potentially handle other alt receive modes 
             return
         # Update transaction, then remove
-        record: Transaction = filtered_transactions[0]
+        record: Transaction = copy.copy(filtered_transactions[0])
         record.received_at = datetime.now()
         logger.info(record)
-        self.transactions.remove(record)
+        self.transactions.remove(record) # Deepcopy, Remove for now, we may attempt to implement advance request/response handling later..
         # Save data to database
-        self.db.insert({"id": record.id, "action": response.action, "shareId": response.shareId ,"data": response.data, "requestedAt": record.sent_at, "receivedAt": record.received_at})
+        self.db.insert({"id": record.id, "device": path, "action": response.action, "shareId": response.shareId ,"data": response.data, "requestedAt": record.sent_at, "receivedAt": record.received_at})
         # Pass data to callback functions
-        self.callback(response.data)
+        self.callback(record, response.data)
 
-    def register_callback(self, fn: Callable[[bytes], None]) -> None:
+    def register_callback(self, fn: Callable[[Transaction, bytes], None]) -> None:
         """Register a receive callback function.
 
         :param fn: Callback function
-        :type fn: Callable function 
+        :type fn: Callable function
         """
         self.fns.append(fn)
 
@@ -258,7 +266,7 @@ class API():
         """
         self.fns.clear()
 
-    def callback(self, data: bytes) -> None:
+    def callback(self, record: Transaction, data: bytes) -> None:
         """Calls all registered callback functions.
 
         :param data: Return data from the device
@@ -267,6 +275,6 @@ class API():
         for fn in self.fns:
             try:
                 # Pass data to callback function
-                fn(data)
+                fn(record, data)
             except:
                 logger.debug("Callback function failed to execute")
