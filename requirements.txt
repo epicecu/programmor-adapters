@@ -2,3 +2,5 @@ protobuf
 grpcio-tools
 hid
 tinydb
+aiohttp
+socketio

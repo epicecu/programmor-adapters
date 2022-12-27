@@ -2,8 +2,8 @@ from usb.usb import USB
 from typing import List, Dict, Any, Protocol, Callable
 from uuid import uuid4
 from datetime import datetime
-import copy
 from tinydb import TinyDB, Query
+import copy
 
 # Transaction Protobuf File
 import usb.proto.transaction_pb2 as transaction_pb2
@@ -244,14 +244,14 @@ class API():
             logger.debug("Could not match received data to a transaction record")
             return
         # Update transaction, then remove
-        record: Transaction = copy.copy(filtered_transactions[0])
-        record.received_at = datetime.now()
-        logger.info(record)
-        self.transactions.remove(record) # Deepcopy, Remove for now, we may attempt to implement advance request/response handling later..
+        metadata: Transaction = copy.copy(filtered_transactions[0])
+        metadata.received_at = datetime.now()
+        logger.info(metadata)
+        self.transactions.remove(metadata) # Deepcopy, Remove for now, we may attempt to implement advance request/response handling later..
         # Save data to database
-        self.db.insert({"id": record.id, "device": path, "action": response.action, "shareId": response.shareId ,"data": response.data, "requestedAt": record.sent_at, "receivedAt": record.received_at})
+        self.db.insert({"id": metadata.id, "device": path, "action": response.action, "shareId": response.shareId ,"data": response.data, "requestedAt": metadata.sent_at, "receivedAt": metadata.received_at})
         # Pass data to callback functions
-        self.callback(record, response.data)
+        self.callback(metadata, response.data)
 
     def register_callback(self, fn: Callable[[Transaction, bytes], None]) -> None:
         """Register a receive callback function.
@@ -266,7 +266,7 @@ class API():
         """
         self.fns.clear()
 
-    def callback(self, record: Transaction, data: bytes) -> None:
+    def callback(self, metadata: Transaction, data: bytes) -> None:
         """Calls all registered callback functions.
 
         :param data: Return data from the device
@@ -275,6 +275,6 @@ class API():
         for fn in self.fns:
             try:
                 # Pass data to callback function
-                fn(record, data)
+                fn(metadata, data)
             except:
                 logger.debug("Callback function failed to execute")

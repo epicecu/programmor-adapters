@@ -2,7 +2,7 @@ import logging
 from time import sleep
 from typing import List, Any
 
-from shared.interface import Comm, Frame
+from shared.comm import Comm, Frame
 
 try:  # noqa: E722
     import hid # Linux
@@ -20,7 +20,7 @@ try:  # noqa: E722
         return device_strings
     hid.enumerate = enumerate
 except Exception:
-    print("Failled to import HID library, install required binaries for your system")
+    print("Failled to import Pywinusb library")
 
 
 logger = logging.getLogger(__name__)
@@ -77,6 +77,9 @@ class USB(Comm):
             return False
         self.blocking = False
         return True
+
+    def get_devices(self) -> List[str]:
+        return self.get_device_paths()
 
     def read(self) -> bytes:
         # Return no bytes if device is not ready

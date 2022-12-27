@@ -2,10 +2,13 @@ import sys
 import logging
 import argparse
 import os
+import asyncio
 
-from usb.api import API
-from usb.socket_endpoint import SocketEndpoint
-from usb.rest_endpoint import RestEndpoint
+from shared.api import API
+from shared.socket_endpoint import SocketEndpoint
+from shared.rest_endpoint import RestEndpoint
+
+from usb.usb import USB
 
 
 def main():
@@ -62,12 +65,14 @@ def main():
     # Application to go here
     # sys.exit(app.exec())
 
+    loop:asyncio.AbstractEventLoop = asyncio.get_event_loop()
+
     # Programmor Adapter API function 
-    api = API()
+    api = API(USB)
 
     # Programmor Adapter Endpoints to the GUI
-    socket = SocketEndpoint(api)
-    rest = RestEndpoint(api)
+    socket = SocketEndpoint(loop, api)
+    rest = RestEndpoint(loop, api)
 
     # TEst
     logger.debug(api.get_devices())
