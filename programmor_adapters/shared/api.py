@@ -49,7 +49,7 @@ class API():
         self.comm = comms_method
 
     def get_devices(self) -> List[str]:
-        """Returns a list of Programmor compatiable device paths.
+        """Returns a list of Programmor compatible device paths.
 
         :return: A list of device paths
         :rtype: str
@@ -74,7 +74,7 @@ class API():
         return self.get_device(path) != None 
 
     def connect_device(self, path: str) -> bool:
-        """Connects to a Programmor compatiable Comms device. 
+        """Connects to a Programmor compatible Comms device. 
 
         :param path: A Comms device path
         :type path: str
@@ -218,7 +218,18 @@ class API():
         # print(publishMessage.data.hex(" "))
         return publishMessage
 
-    def get_messages(self, path:str, to_time: datetime, from_time: datetime, shareId: int) -> list[bytes]:
+    def get_shares(self, path:str, to_time: datetime, from_time: datetime, shareId: int) -> List[bytes]:
+        """Get a range of shares from the database.
+
+        :param path: A Comms device path
+        :type path: str
+        :param to_time: To datetime range
+        :type to_time: datetime
+        :param from_time: From datetime range
+        :type datetime: datetime
+        :param shareId: A share id
+        :type shareId: int
+        """
         item = Query()
         items = self.db.search(item.device == path and item.shareId == shareId and item.receivedAt >= to_time and item.receivedAt <= from_time )
         messages = list()
@@ -252,7 +263,7 @@ class API():
         # Save data to database
         self.db.insert({"id": metadata.id, "device": path, "action": response.action, "shareId": response.shareId ,"data": response.data, "requestedAt": metadata.sent_at, "receivedAt": metadata.received_at})
         # Pass data to callback functions
-        self.callback(metadata, response.data)
+        self._callback(metadata, response.data)
 
     def register_callback(self, fn: Callable[[Transaction, bytes], None]) -> None:
         """Register a receive callback function.
@@ -267,7 +278,7 @@ class API():
         """
         self.fns.clear()
 
-    def callback(self, metadata: Transaction, data: bytes) -> None:
+    def _callback(self, metadata: Transaction, data: bytes) -> None:
         """Calls all registered callback functions.
 
         :param data: Return data from the device

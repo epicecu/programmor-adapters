@@ -5,8 +5,8 @@ import os
 import asyncio
 
 from shared.api import API
-from shared.socket_endpoint import SocketEndpoint
-from shared.rest_endpoint import RestEndpoint
+from shared.socket_namespace import SocketNamespace
+from shared.rest_namespace import RestNamespace
 
 from usb.usb import USB
 
@@ -71,6 +71,7 @@ def main():
     api = API(USB)
 
     # Programmor Adapter Endpoints to the GUI
+    # NOTE https://stackoverflow.com/questions/53465862/python-aiohttp-into-existing-event-loop
     socket = SocketEndpoint(loop, api)
     rest = RestEndpoint(loop, api)
 

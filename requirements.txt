@@ -3,4 +3,4 @@ grpcio-tools
 hid
 tinydb
 aiohttp
-socketio
+python-socketio
