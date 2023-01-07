@@ -1,9 +1,12 @@
 from shared.comm import Comm
+from shared.datetime import diff_ms
+from datetime import datetime
+from time import sleep
 from typing import List, Dict, Any, Protocol, Callable
 from uuid import uuid4
-from datetime import datetime
 from tinydb import TinyDB, Query
 import copy
+import threading
 
 # Transaction Protobuf File
 import shared.proto.transaction_pb2 as transaction_pb2
@@ -32,7 +35,23 @@ class Transaction(Protocol):
     created_at: datetime = datetime.now()
 
 
-class API():
+class ScheduledMessage(Protocol):
+    """Scheduled Message Object
+    """
+    device_path: str
+    share_id: int
+    interval_ms: int
+    last_scheduled: datetime
+    updated_at: datetime
+    created_at: datetime = datetime.now()
+    def tick(self):
+        self.last_scheduled = datetime.now()
+    def update_interval(self, interval_ms: int):
+        self.interval_ms = interval_ms
+        self.updated_at = datetime.now()
+
+
+class API(threading.Thread):
     """API
     The API interface between the communications device and Programmor HMI. The API class will
     package provided data into a transaction message and then rely on the Comms implementation
@@ -42,11 +61,75 @@ class API():
     def __init__(self, comms_method: Comm,  database_storage_file: str = "./comm-db.json") -> None:
         """Constructor method
         """
+        # Thread
+        threading.Thread.__init__(self)
+        self.stop_flag: bool = False
+        # Process scheduled messages loop 
+        self.scheduled: List[ScheduledMessage] = list()
+        # API
         self.connections: Dict[str, Comm] = dict()
         self.fns: List[str, Callable[[Transaction, bytes], None]] = dict()
         self.transactions: List[Transaction] = list()
         self.db = TinyDB(f"{database_storage_file}")
         self.comm = comms_method
+
+    def start(self) -> None:
+        """Starts the thread
+        """
+        threading.Thread.start(self)
+        logger.info("Starting Comms Thread")
+
+    def stop(self) -> None:
+        """Stops the thread
+        """
+        logger.info("Stopping Comms Thread")
+        self.stop_flag = True
+
+    def run(self) -> None:
+        """Run method used by python threading
+        """
+        while True:
+            # Stop thread
+            if self.stop_flag:
+                logger.info("Stopped API Thread")
+                break
+
+            # Process logic
+            self._process_scheduled_messages(self)
+
+            # Sleep the thread
+            sleep(0.0001)  # 0.1ms
+
+    def _process_scheduled_messages(self) -> None:
+        """Process Scheduled Messages
+        Loop through the schedules and determin if the process time 
+        has elapsed the interval time.
+        """
+        for schedule in self.scheduled:
+            if diff_ms(datetime.now(), schedule.last_scheduled) > schedule.interval_ms:
+                self.request_share(schedule.device_path, schedule.share_id)
+                schedule.tick()
+
+    def set_scheduled_message(self, path: str, shareId: int, interval_ms: float = 100) -> None:
+        """Set Schedule Message
+        """
+        # Check if schedule already exists
+        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_path == path, self.scheduled), None)
+        # Create or modify the schedule
+        if schedule == None:
+            # Create new schedule
+            schedule = ScheduledMessage()
+            self.scheduled.append(schedule)
+        else:
+            # Update the schedule
+            schedule.update_interval(interval_ms)
+
+    def clear_scheduled_message(self, path: str, shareId: int) -> None:
+        """Clear Scheduled Message
+        """
+        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_path == path, self.scheduled), None)
+        if schedule != None:
+            self.scheduled.remove(schedule)
 
     def get_devices(self) -> List[str]:
         """Returns a list of Programmor compatible device paths.
