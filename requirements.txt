@@ -2,5 +2,7 @@ protobuf
 grpcio-tools
 hid
 tinydb
-aiohttp
-python-socketio
+Flask
+Flask-SocketIO
+flask-classful
+werkzeug==2.1.2

@@ -5,7 +5,6 @@ from time import sleep
 from typing import List, Dict, Any, Protocol, Callable
 from uuid import uuid4
 from tinydb import TinyDB, Query
-import copy
 import threading
 
 # Transaction Protobuf File
@@ -24,19 +23,8 @@ Writing docs - https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.h
 
 """
 
-
-class Transaction(Protocol):
-    """API Tranactions with the device
-    """
-    id: int
-    device_path: str
-    sent_at: datetime
-    received_at: datetime
-    created_at: datetime = datetime.now()
-
-
-class ScheduledMessage(Protocol):
-    """Scheduled Message Object
+class ScheduledRequest(Protocol):
+    """Scheduled Request Message Object
     """
     device_path: str
     share_id: int
@@ -51,7 +39,18 @@ class ScheduledMessage(Protocol):
         self.updated_at = datetime.now()
 
 
+class RequestRecord(Protocol):
+    """API Tranactions with the device
+    """
+    id: int
+    device_path: str
+    sent_at: datetime
+    received_at: datetime
+    created_at: datetime = datetime.now()
+
+
 class API(threading.Thread):
+
     """API
     The API interface between the communications device and Programmor HMI. The API class will
     package provided data into a transaction message and then rely on the Comms implementation
@@ -65,11 +64,11 @@ class API(threading.Thread):
         threading.Thread.__init__(self)
         self.stop_flag: bool = False
         # Process scheduled messages loop 
-        self.scheduled: List[ScheduledMessage] = list()
+        self.scheduled: List[ScheduledRequest] = list()
         # API
         self.connections: Dict[str, Comm] = dict()
-        self.fns: List[str, Callable[[Transaction, bytes], None]] = dict()
-        self.transactions: List[Transaction] = list()
+        self.fns: List[str, Callable[[bytes], None]] = dict()
+        self.transactions: List[RequestRecord] = list()
         self.db = TinyDB(f"{database_storage_file}")
         self.comm = comms_method
 
@@ -118,7 +117,7 @@ class API(threading.Thread):
         # Create or modify the schedule
         if schedule == None:
             # Create new schedule
-            schedule = ScheduledMessage()
+            schedule = ScheduledRequest()
             self.scheduled.append(schedule)
         else:
             # Update the schedule
@@ -200,7 +199,7 @@ class API(threading.Thread):
         # Request share from device
         request_message = self._request_message(shareId)
         # Generate transaction record
-        record = Transaction()
+        record = RequestRecord()
         record.id = request_message.token
         record.device_path = path
         record.sent_at = datetime.now()
@@ -251,7 +250,7 @@ class API(threading.Thread):
         # Generate publish message
         publish_message = self._publish_message(shareId, data)
         # Generate transaction record
-        record = Transaction()
+        record = RequestRecord()
         record.id = publish_message.token
         record.device_path = path
         record.sent_at = datetime.now()
@@ -339,16 +338,16 @@ class API(threading.Thread):
             logger.debug("Could not match received data to a transaction record")
             return
         # Update transaction, then remove
-        metadata: Transaction = copy.copy(filtered_transactions[0])
+        metadata: RequestRecord = filtered_transactions[0]
         metadata.received_at = datetime.now()
         logger.info(metadata)
-        self.transactions.remove(metadata) # Deepcopy, Remove for now, we may attempt to implement advance request/response handling later..
+        self.transactions.remove(metadata)
         # Save data to database
         self.db.insert({"id": metadata.id, "device": path, "action": response.action, "shareId": response.shareId ,"data": response.data, "requestedAt": metadata.sent_at, "receivedAt": metadata.received_at})
         # Pass data to callback functions
-        self._callback(metadata, response.data)
+        self._callback(response.data)
 
-    def register_callback(self, fn: Callable[[Transaction, bytes], None]) -> None:
+    def register_callback(self, fn: Callable[[bytes], None]) -> None:
         """Register a receive callback function.
 
         :param fn: Callback function
@@ -361,7 +360,7 @@ class API(threading.Thread):
         """
         self.fns.clear()
 
-    def _callback(self, metadata: Transaction, data: bytes) -> None:
+    def _callback(self, data: bytes) -> None:
         """Calls all registered callback functions.
 
         :param data: Return data from the device
@@ -370,6 +369,6 @@ class API(threading.Thread):
         for fn in self.fns:
             try:
                 # Pass data to callback function
-                fn(metadata, data)
+                fn(data)
             except:
                 logger.debug("Callback function failed to execute")

@@ -3,10 +3,11 @@ import logging
 import argparse
 import os
 import asyncio
+from flask import Flask
 
 from shared.api import API
-from shared.socket_namespace import SocketNamespace
-from shared.rest_namespace import RestNamespace
+from shared.socket_endpoint import SocketEndpoint
+from shared.rest_endpoint import RestEndpoint
 
 from usb.usb import USB
 
@@ -65,24 +66,27 @@ def main():
     # Application to go here
     # sys.exit(app.exec())
 
-    loop:asyncio.AbstractEventLoop = asyncio.get_event_loop()
-
     # Programmor Adapter API function 
     api = API(USB)
 
+    # Flask application
+    app = Flask(__name__)
+
     # Programmor Adapter Endpoints to the GUI
-    # NOTE https://stackoverflow.com/questions/53465862/python-aiohttp-into-existing-event-loop
-    socket = SocketEndpoint(loop, api)
-    rest = RestEndpoint(loop, api)
+    rest = RestEndpoint(app, api)
+    socket = SocketEndpoint(app, api)
 
     # TEst
     logger.debug(api.get_devices())
+    try:
+        teensy = api.get_devices()[0]
+        result = api.connect_device(teensy)
+        api.disconnect_device(teensy)
+    except:
+        print("TEst failed")
 
-    teensy = api.get_devices()[0]
-
-    result = api.connect_device(teensy)
-
-    api.disconnect_device(teensy)
+    # Starts the Socket-Flask, and Flask app 
+    socket.start()
 
 if __name__ == "__main__":
     main()
