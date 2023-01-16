@@ -77,16 +77,25 @@ def main():
     socket = SocketEndpoint(app, api)
 
     # TEst
-    logger.debug(api.get_devices())
-    try:
-        teensy = api.get_devices()[0]
-        result = api.connect_device(teensy)
-        api.disconnect_device(teensy)
-    except:
-        print("TEst failed")
+    # logger.debug(api.get_devices())
+    # try:
+    #     teensy = api.get_devices()[0]
+    #     result = api.connect_device(teensy)
+    #     api.disconnect_device(teensy)
+    # except:
+    #     print("TEst failed")
 
     # Starts the Socket-Flask, and Flask app 
     socket.start()
+
+    # Stopping Adapter
+    logger.info("Stopping Application")
+    try:
+        socket.stop()
+        rest.stop()
+    except:
+        logger.debug("Failed to stop Socket or Rest apps")
+    api.stop()
 
 if __name__ == "__main__":
     main()

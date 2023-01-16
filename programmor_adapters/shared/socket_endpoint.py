@@ -6,7 +6,7 @@ from flask_socketio import SocketIO, Namespace
 
 class SocketEndpoint(Endpoint):
 
-    class SocketNamespace(Namespace):
+    class ApiNamespace(Namespace):
         """Socket Namespace
         """
         def on_connect(self):
@@ -33,7 +33,7 @@ class SocketEndpoint(Endpoint):
     def __init__(self, app: Flask, api: API) -> None:
         super().__init__(app, api)
         self.socket: SocketIO = SocketIO(app)
-        self.socket.on_namespace(self.SocketNamespace('/'))
+        self.socket.on_namespace(self.ApiNamespace('/api'))
 
     def start(self) -> None:
         """Starts both the Flask, and the Socket app

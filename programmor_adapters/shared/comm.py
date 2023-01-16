@@ -38,12 +38,12 @@ class Comm(threading.Thread):
         """Starts the thread
         """
         threading.Thread.start(self)
-        logger.info("Starting Comms Thread")
+        logger.debug("Starting Comms Thread")
 
     def stop(self) -> None:
         """Stops the thread
         """
-        logger.info("Stopping Comms Thread")
+        logger.debug("Stopping Comms Thread")
         self.stop_flag = True
         self.blocking = True
         self.close()
@@ -54,7 +54,7 @@ class Comm(threading.Thread):
         while True:
             # Stop thread
             if self.stop_flag:
-                logger.info("Stopped Comms Thread")
+                logger.debug("Stopped Comms Thread")
                 break
 
             # Skip if blocking
@@ -264,6 +264,6 @@ class Comm(threading.Thread):
         raise NotImplementedError("Close method not implemented")
 
     def get_devices(self) -> List[str]:
-        """Get List of Devices
+        """Get List of Device Ids
         """
         raise NotImplementedError("Get devices method not implemented")

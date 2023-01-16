@@ -1,6 +1,7 @@
 import logging
+import hashlib
 from time import sleep
-from typing import List, Any
+from typing import List, Any, Dict
 
 from shared.comm import Comm, Frame
 
@@ -25,21 +26,35 @@ except Exception:
 
 logger = logging.getLogger(__name__)
 
+ENCODE = "utf-8"
+
 
 class USB(Comm):
 
     def __init__(self) -> None:
         super().__init__()
+        # Connected device
         self.device: hid.Device = None
-        self.devices: List[Any] = hid.enumerate()
+        self.device_path: str = None
+        self.device_id: str = None
+        # Device Id to path lookup
+        self.device_path_lookup: Dict[str, str] = dict()
+        self.get_device_ids()
 
-    # Get list of devices
-    def get_device_paths(self) -> List[str]:
+    def __str__(self) -> str:
+        return f"USB(id: {self.device_id} path: {self.device_path})"
+
+    def get_device_ids(self) -> List[str]:
+        """Get Device Ids
+        """
         all_devices: List = hid.enumerate()
         compatible_devices: List[str] = list()
         for device in all_devices:
-            if self.check_device_compatibility(device['path']):
-                compatible_devices.append(device['path'])
+            device_path: str = device['path'].decode(ENCODE)
+            if self.check_device_compatibility(device_path):
+                device_id = hashlib.md5(device['path']).hexdigest()
+                self.device_path_lookup[device_id] = device_path
+                compatible_devices.append(device_id)
         return compatible_devices
 
     # Checks if this device is a
@@ -48,7 +63,7 @@ class USB(Comm):
         sleep(0.01)
         # Connect to device
         try:
-            device = hid.Device(path=path)
+            device = hid.Device(path=path.encode(ENCODE))
         except Exception:
             # logger.debug(f"Failed to open device {path}")
             self.blocking = False
@@ -78,8 +93,8 @@ class USB(Comm):
         self.blocking = False
         return True
 
-    def get_devices(self) -> List[str]:
-        return self.get_device_paths()
+    def get_devices(self) -> List[str]:       
+        return self.get_device_ids()
 
     def read(self) -> bytes:
         # Return no bytes if device is not ready
@@ -97,9 +112,16 @@ class USB(Comm):
         self.device.write(buffer)
         sleep(0.01)
 
-    def connect(self, path: str) -> bool:
+    def connect(self, device_id: str) -> bool:
+        if device_id not in self.device_path_lookup:
+            logger.debug(f"Device id {device_id} not found in lookup")
+            return False
+        path = self.device_path_lookup[device_id]
         try:
-            self.device = hid.Device(path=path)
+            self.device = hid.Device(path=path.encode(ENCODE))
+            self.device_path = path
+            self.device_id = device_id
+            logger.debug(f"Connected {self.__str__()}")
             return True
         except Exception:
             return False
@@ -107,4 +129,5 @@ class USB(Comm):
     def close(self) -> None:
         if self.device is not None:
             self.device.close()
+            logger.debug(f"Closed {self.__str__()}")
             self.device = None

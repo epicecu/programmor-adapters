@@ -26,7 +26,7 @@ Writing docs - https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.h
 class ScheduledRequest(Protocol):
     """Scheduled Request Message Object
     """
-    device_path: str
+    device_id: str
     share_id: int
     interval_ms: int
     last_scheduled: datetime
@@ -43,7 +43,7 @@ class RequestRecord(Protocol):
     """API Tranactions with the device
     """
     id: int
-    device_path: str
+    device_id: str
     sent_at: datetime
     received_at: datetime
     created_at: datetime = datetime.now()
@@ -76,21 +76,26 @@ class API(threading.Thread):
         """Starts the thread
         """
         threading.Thread.start(self)
-        logger.info("Starting Comms Thread")
+        logger.info("Starting Api Thread")
 
     def stop(self) -> None:
         """Stops the thread
         """
-        logger.info("Stopping Comms Thread")
+        logger.info("Stopping Api Thread")
+        # Close all connections
+        for _, con in self.connections.items():
+            con.stop()
+        # Stops the thread
         self.stop_flag = True
 
     def run(self) -> None:
         """Run method used by python threading
         """
+        logger.info("API Thread Running...")
         while True:
             # Stop thread
             if self.stop_flag:
-                logger.info("Stopped API Thread")
+                logger.info("API Thread Stopped")
                 break
 
             # Process logic
@@ -106,14 +111,14 @@ class API(threading.Thread):
         """
         for schedule in self.scheduled:
             if diff_ms(datetime.now(), schedule.last_scheduled) > schedule.interval_ms:
-                self.request_share(schedule.device_path, schedule.share_id)
+                self.request_share(schedule.device_id, schedule.share_id)
                 schedule.tick()
 
-    def set_scheduled_message(self, path: str, shareId: int, interval_ms: float = 100) -> None:
+    def set_scheduled_message(self, device_id: str, shareId: int, interval_ms: float = 100) -> None:
         """Set Schedule Message
         """
         # Check if schedule already exists
-        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_path == path, self.scheduled), None)
+        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id == device_id, self.scheduled), None)
         # Create or modify the schedule
         if schedule == None:
             # Create new schedule
@@ -123,77 +128,98 @@ class API(threading.Thread):
             # Update the schedule
             schedule.update_interval(interval_ms)
 
-    def clear_scheduled_message(self, path: str, shareId: int) -> None:
+    def clear_scheduled_message(self, device_id: str, shareId: int) -> None:
         """Clear Scheduled Message
         """
-        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_path == path, self.scheduled), None)
+        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id == device_id, self.scheduled), None)
         if schedule != None:
             self.scheduled.remove(schedule)
 
     def get_devices(self) -> List[str]:
-        """Returns a list of Programmor compatible device paths.
+        """Returns a list of Programmor compatible device ids.
 
-        :return: A list of device paths
+        :return: A list of device ids
         :rtype: str
         """
         comm = self.comm() # This may be an anti pattern, fix latter
         return comm.get_devices()
 
-    def get_device(self, path: str) -> Comm:
-        """Gets a connected Comms device by path, returns None if the device is not connected.
+    def get_device(self, device_id: str) -> Comm:
+        """Gets a connected Comms device by id, returns None if the device is not connected.
 
-        :param path: A Comms device path
-        :type path: str
+        :param device_id: A Comms device id
+        :type device_id: str
+        :return: A Comm object
+        :rtype: Comm
         """
-        return self.connections.get(path, None)
+        return self.connections.get(device_id, None)
 
-    def check_device(self, path: str) -> bool:
+    def check_device(self, device_id: str) -> bool:
         """Checks if a device is avaliable and connected.
 
-        :param path: A Comms device path
-        :type path: str
+        :param device_id: A Comms device id
+        :type device_id: str
+        :return: Status
+        :rtype: bool
         """
-        return self.get_device(path) != None 
+        if self.get_device(device_id) != None:
+            return True
+        else:
+            return False 
 
-    def connect_device(self, path: str) -> bool:
+    def connect_device(self, device_id: str) -> bool:
         """Connects to a Programmor compatible Comms device. 
 
-        :param path: A Comms device path
-        :type path: str
+        :param device_id: A Comm's device id
+        :type device_id: str
+        :return: Status
+        :rtype: bool
         """
-        if self.check_device(path):
+        if self.check_device(device_id):
+            print(self.connections)
+            logger.info(f"Device already connected {device_id}")
             return False
         # Create USB Connection and connect
-        self.connections[path] = self.comm()
-        self.connections[path].set_received_message_callback(lambda data: self._on_receive(path, data))
-        self.connections[path].start()
-        if not self.connections[path].connect(path):
-            self.connections[path].stop()
+        print("Creating a new comms obj")
+        self.connections[device_id] = self.comm()
+        self.connections[device_id].set_received_message_callback(lambda data: self._on_receive(device_id, data))
+        self.connections[device_id].start()
+        if not self.connections[device_id].connect(device_id):
+            logger.debug(f"Failed to connect to device {device_id}")
+            self.connections[device_id].stop()
+            del self.connections[device_id]
             return False
+        logger.debug(f"Connected to device {device_id}")
         return True
 
-    def disconnect_device(self, path: str) -> None:
+    def disconnect_device(self, device_id: str) -> bool:
         """Disconnects a Comms device.
 
-        :param path: A Comms device path
-        :type path: str
+        :param device_id: A Comm's device id
+        :type device_id: str
+        :return: Status
+        :rtype: bool
         """
-        if not self.check_device(path):
+        if not self.check_device(device_id):
             return
         # Close connection and delete
-        self.connections[path].close()
-        self.connections[path].stop()
-        del self.connections[path]
+        try:
+            self.connections[device_id].close()
+            self.connections[device_id].stop()
+            del self.connections[device_id]
+            return True
+        except:
+            return False
 
-    def request_share(self, path: str, shareId: int) -> None:
+    def request_share(self, device_id: str, shareId: int) -> None:
         """Request a Share from the Comms device
 
-        :param path: A Comms device path
-        :type path: str
+        :param device_id: A Comm's device id
+        :type device_id: str
         :param shareId: A share id
         :type shareId: int
         """
-        device = self.get_device(path)
+        device = self.get_device(device_id)
         if device == None:
             return
         # Request share from device
@@ -201,7 +227,7 @@ class API(threading.Thread):
         # Generate transaction record
         record = RequestRecord()
         record.id = request_message.token
-        record.device_path = path
+        record.device_id = device_id
         record.sent_at = datetime.now()
         self.transactions.append(record)
         # Convert message to bytes
@@ -209,11 +235,11 @@ class API(threading.Thread):
         # Send data
         device.send_message(request_message_bytes)
 
-    async def request_share_async(self, path: str, shareId: int, timeout_s: float = 1) -> bytes:
+    async def request_share_async(self, device_id: str, shareId: int, timeout_s: float = 1) -> bytes:
         """Request a Share from the Comms device and wait for a response within the timeout.
 
-        :param path: A Comms device path
-        :type path: str
+        :param device_id: A Comms device id
+        :type device_id: str
         :param shareId: A share id
         :type shareId: int
         :param timeout_s: Waiting timeout in seconds
@@ -221,7 +247,7 @@ class API(threading.Thread):
         :return: A response share
         :rtype: bytes
         """
-        device = self.get_device(path)
+        device = self.get_device(device_id)
         if device == None:
             return bytes(0)
         # Request share from device
@@ -233,18 +259,18 @@ class API(threading.Thread):
             return bytes(0)
         return response.data
 
-    def publish_share(self, path: str, shareId: int, data: bytes) -> None:
+    def publish_share(self, device_id: str, shareId: int, data: bytes) -> None:
         """Publish a Share to the Comms device
 
-        :param path: A Comms device path
-        :type path: str
+        :param device_id: A Comms device id
+        :type device_id: str
         :param shareId: A share id
         :type shareId: int
         :param data: The share to publish to the device
         :type data: bytes
         """
         # Check & Fetch device
-        device = self.get_device(path)
+        device = self.get_device(device_id)
         if device == None:
             return
         # Generate publish message
@@ -252,7 +278,7 @@ class API(threading.Thread):
         # Generate transaction record
         record = RequestRecord()
         record.id = publish_message.token
-        record.device_path = path
+        record.device_id = device_id
         record.sent_at = datetime.now()
         self.transactions.append(record)
         # Convert message to bytes
@@ -300,11 +326,11 @@ class API(threading.Thread):
         # print(publishMessage.data.hex(" "))
         return publishMessage
 
-    def get_shares(self, path:str, to_time: datetime, from_time: datetime, shareId: int) -> List[bytes]:
+    def get_shares(self, device_id:str, to_time: datetime, from_time: datetime, shareId: int) -> List[bytes]:
         """Get a range of shares from the database.
 
-        :param path: A Comms device path
-        :type path: str
+        :param device_id: A Comm's device id
+        :type device_id: str
         :param to_time: To datetime range
         :type to_time: datetime
         :param from_time: From datetime range
@@ -313,17 +339,17 @@ class API(threading.Thread):
         :type shareId: int
         """
         item = Query()
-        items = self.db.search(item.device == path and item.shareId == shareId and item.receivedAt >= to_time and item.receivedAt <= from_time )
+        items = self.db.search(item.device == device_id and item.shareId == shareId and item.receivedAt >= to_time and item.receivedAt <= from_time )
         messages = list()
         for i in items:
             messages.append(i.data)
         return messages
 
-    def _on_receive(self, path: str, data: bytes) -> None:
+    def _on_receive(self, device_id: str, data: bytes) -> None:
         """A Request Message as bytes
 
-        :param path: A Comms device path
-        :type path: str
+        :param device_id: A Comm's device id
+        :type device_id: str
         :param data: Return data from the device
         :type data: bytes
         """
@@ -333,7 +359,7 @@ class API(threading.Thread):
         except BaseException:
             return
         # Confirm the received data is in response to a transaction
-        filtered_transactions = filter(lambda record: record.id == response.token and record.device_path == path, self.transactions)
+        filtered_transactions = filter(lambda record: record.id == response.token and record.device_id == device_id, self.transactions)
         if len(filtered_transactions) == 0:
             logger.debug("Could not match received data to a transaction record")
             return
@@ -343,7 +369,7 @@ class API(threading.Thread):
         logger.info(metadata)
         self.transactions.remove(metadata)
         # Save data to database
-        self.db.insert({"id": metadata.id, "device": path, "action": response.action, "shareId": response.shareId ,"data": response.data, "requestedAt": metadata.sent_at, "receivedAt": metadata.received_at})
+        self.db.insert({"id": metadata.id, "device": device_id, "action": response.action, "shareId": response.shareId ,"data": response.data, "requestedAt": metadata.sent_at, "receivedAt": metadata.received_at})
         # Pass data to callback functions
         self._callback(response.data)
 
