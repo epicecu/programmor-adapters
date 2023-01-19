@@ -116,6 +116,13 @@ class API(threading.Thread):
 
     def set_scheduled_message(self, device_id: str, shareId: int, interval_ms: float = 100) -> None:
         """Set Schedule Message
+
+        :param device_id: A Comms device id
+        :type device_id: str
+        :param shareId: A share id
+        :type device_id: int
+        :param interval_ms: The scheduled interval time
+        :type device_id: float
         """
         # Check if schedule already exists
         schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id == device_id, self.scheduled), None)
@@ -130,6 +137,11 @@ class API(threading.Thread):
 
     def clear_scheduled_message(self, device_id: str, shareId: int) -> None:
         """Clear Scheduled Message
+
+        :param device_id: A Comms device id
+        :type device_id: str
+        :param shareId: A share id
+        :type device_id: int
         """
         schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id == device_id, self.scheduled), None)
         if schedule != None:

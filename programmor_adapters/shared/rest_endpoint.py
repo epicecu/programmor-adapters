@@ -2,6 +2,7 @@ from shared.endpoint import Endpoint
 from shared.api import API
 from flask import Flask, jsonify
 from flask_classful import FlaskView
+import base64
 
 # Logging
 import logging
@@ -10,46 +11,124 @@ logger = logging.getLogger(__name__)
 
 class RestEndpoint(Endpoint):
 
+    """REST Endpoint
+    Provides a REST API endpoint for applications to interface with Programmor
+    compatiable devices.
+    """
+
     class ApiView(FlaskView):
         
         """ API Reference
         """
         api: API
         
-        """domain:port/api/ View
-        Helper library: http://flask-classful.teracy.org/
-        """
         def index(self):
-            return jsonify({'test': 'test1'})
+            """Index
+            
+            GET: /api/
+            """
+            return jsonify({'Programmor-Adapter': 'USB'})
 
         def get_devices(self):
+            """Get Devices
+
+            GET: /api/get_devices/
+            """
             return jsonify({'devices': self.api.get_devices()})
 
         def check_status(self, device_id: str):
+            """Check Status
+            
+            GET: /api/check_status
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            """
             return jsonify({'status': self.api.check_device(device_id)})
 
         def connect_device(self, device_id: str):
+            """Connect Devices
+
+            GET: /api/connect_device/<device_id>/
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            """
             return jsonify({'connected': self.api.connect_device(device_id)})
 
         def disconnect_device(self, device_id: str):
+            """Disconnect Device
+
+            GET: /api/disconnect_device/<device_id>/
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            """
             return jsonify({'disconnected': self.api.disconnect_device(device_id)})
 
         def request_share(self, device_id: str, share_id: int):
-            return jsonify({'data': self.api.request_share_async(device_id, share_id, 1)})
+            """Request Share
 
-        def publish_share(self, device_id: str, share_id:int, data: bytes):
+            GET: /api/request_share/<device_id>/<share_id>/
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            :param share_id: Protobuf model share id
+            :type device_id: str
+            """
+            data = self.api.request_share_async(device_id, share_id, 1)
+            encoded = base64.urlsafe_b64encode(data)
+            data_urlfriendly = encoded.rstrip("=")
+            return jsonify({'data': data_urlfriendly})
+
+        def publish_share(self, device_id: str, share_id:int, data_urlfriendly: str):
+            """Publish Share
+            The data should be encoded using a base64 url friendly function
+
+            GET: /api/publish_share/<device_id>/<share_id>/<data>/
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            :param share_id: Protobuf model share id
+            :type device_id: int
+            :param data_urlfriendly: Protobuf share data encoded in base64 urlfriendly
+            :type data_urlfriendly: str
+            """
+            padding = 4 - (len(data_urlfriendly) % 4)
+            data_urlfriendly_mod = data_urlfriendly + ("=" * padding)
+            data = base64.urlsafe_b64decode(data_urlfriendly_mod)
             return jsonify({'None': self.api.publish_share(device_id, share_id, data)})
 
         def set_scheduled_message(self, device_id: str, share_id: int, interval: int):
+            """Set Scheduled Message
+
+            GET: /api/set_scheduled_message/<device_id>/<share_id>/<interval>/
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            :param share_id: Protobuf model share id
+            :type device_id: int
+            :param interval: Scheduled interval to request share in milliseconds
+            :type interval: int
+            """
             return jsonify({'None': self.api.set_scheduled_message(device_id, share_id, interval)})
 
         def clear_scheduled_message(self, device_id: str, share_id: int):
+            """Clear Scheduled Message
+
+            GET: /api/clear_scheduled_message/<device_id>/<share/
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            :param share_id: Protobuf model share id
+            :type device_id: str
+            """
             return jsonify({'None': self.api.clear_scheduled_message(device_id, share_id)})
 
 
-    """REST Endpoint
-    """
     def __init__(self, app: Flask, api: API) -> None:
+        """REST Endpoint
+        """
         super().__init__(app, api)
         self.ApiView.api = api
         self.ApiView.register(self.app)
