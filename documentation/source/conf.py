@@ -17,8 +17,8 @@ sys.path.insert(0, os.path.abspath('../../src/programmor'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Programmor'
-copyright = '2022, David Cedar'
+project = 'Programmor-Adapters'
+copyright = '2023, EpicECU'
 author = 'David Cedar'
 
 # The full version, including alpha/beta/rc tags
@@ -31,6 +31,7 @@ release = '0.0.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autosummary',
     'rinoh.frontend.sphinx'
 ]
 
