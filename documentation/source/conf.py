@@ -31,9 +31,14 @@ release = '0.0.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autosummary',
+    # 'sphinx.ext.autosummary',
+    'autoapi.extension',
     'rinoh.frontend.sphinx'
 ]
+
+# Autoapi
+autoapi_dirs = ['../../programmor_adapters']
+autoapi_type = "python"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -54,4 +59,4 @@ html_theme = 'alabaster'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']

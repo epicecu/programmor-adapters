@@ -14,16 +14,10 @@ An open source tuning software communication adapter
 Contents
 --------
 .. toctree::
+   :maxdepth: 3
 
-   Home <self>
-   usb_usb
-   shared_api
-   shared_frame
-   shared_comm
-   shared_datetime
-   shared_endpoint
-   shared_rest_endpoint
-   shared_socket_endpoint
+   ...
+   autoapi/index
 
 Indices and tables
 ==================
