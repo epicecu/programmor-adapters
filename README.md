@@ -108,7 +108,8 @@ todo
 
 ## Docs
 
-See our [docs and guides here](https://epicecu.com/programmor/docs/installation)
+While in the python virtual environment, navigate to `/documentation` and run the command `make html`
+View the docs in the browser by running `python3 -m http.server -d build/html`
 
 ## Donations
 
