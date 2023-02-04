@@ -1,0 +1,4 @@
+TransactionMessage.data max_size : 80
+TransactionMessage.data fixed_length : true
+
+Common1.deviceName max_size : 32
