@@ -1,6 +1,6 @@
 {
   "name": "hmi_gui",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -13,10 +13,12 @@
   "dependencies": {
     "bootstrap": "^5.2.3",
     "pinia": "^2.0.30",
+    "socket.io-client": "^4.6.0",
     "vue": "^3.2.45",
     "vue-router": "^4.1.6"
   },
   "devDependencies": {
+    "@types/bootstrap": "^5.2.6",
     "@types/jsdom": "^20.0.1",
     "@types/node": "^18.11.12",
     "@vitejs/plugin-vue": "^4.0.0",

@@ -1,0 +1,14 @@
+{
+    "hmi": {
+        "adapters": [
+            {
+                "adapterId": 0,
+                "adapterName": "USB",
+                "ipAddress": "localhost",
+                "portNumber": 4000,
+                "connected": false,
+                "lastRequest": null
+            }
+        ]
+    }
+}

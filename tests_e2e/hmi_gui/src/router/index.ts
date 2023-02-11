@@ -1,21 +1,19 @@
-// import { createRouter, createWebHistory } from 'vue-router'
-// import AdapterView from '../views/AdapterMenuView.vue'
-// import DeviceView from '../views/DeviceMenuView.vue'
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '@/views/HomeView.vue'
+import AddAdapterView from '@/views/AddAdapterView.vue'
 
-// const router = createRouter({
-//   history: createWebHistory(import.meta.env.BASE_URL),
-//   routes: [
-//     {
-//       path: '/adapter/:adapter_id',
-//       name: 'adapter',
-//       component: AdapterView,
-//       children: [{
-//         path: 'device/:device_id',
-//         name: 'device',
-//         component: DeviceView 
-//       }],
-//     }
-//   ]
-// })
+const router = createRouter({
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes: [
+    {
+        path: '',
+        component: HomeView,
+    },
+    {
+        path: '/adapter/add',
+        component: AddAdapterView
+    }
+    ]
+})
 
-// export default router
+export default router

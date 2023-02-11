@@ -57,5 +57,10 @@ export default {
         <p class="mb-1">{{device.firmware}}</p>
       </a>
     </div>
+    <router-link to="/" class="list-group-item list-group-item-action">
+      <p class="mb-1">
+        Update
+      </p>
+    </router-link>
   </div>
 </template>
