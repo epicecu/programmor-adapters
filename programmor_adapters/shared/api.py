@@ -57,7 +57,7 @@ class API(threading.Thread):
     to package the data into Frames.
     """
 
-    def __init__(self, comms_method: Comm,  database_storage_file: str = "./comm-db.json") -> None:
+    def __init__(self, comms_method: Comm,  database_storage_file: str = "./adapter-db.json") -> None:
         """Constructor method
         """
         # Thread

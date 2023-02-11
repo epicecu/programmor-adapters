@@ -132,4 +132,4 @@ dmypy.json
 .qt_for_python/
 .vscode/
 
-*.json
+*db.json
