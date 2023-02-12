@@ -1,12 +1,15 @@
 <script lang="ts">
 import { useHmiStore } from '@/stores/hmi'
 import { storeToRefs } from 'pinia';
+import SocketSerivce from '@/socket/socket'
 
 export default {
   setup(){
+    // const socket
     const store = useHmiStore()
     const { adapters } = storeToRefs(store)
     return {
+      store,
       adapters,
     }
   },
@@ -20,12 +23,14 @@ export default {
       this.selected = id;
     },
     connectAdapter(adapterId: number){
-      console.log("Connect to adatper "+adapterId);
+      console.log("Connecting to adatper "+adapterId);
+      this.store.connectAdapter(adapterId);
+    },
+    disconnectAdapter(adapterId: number){
+      console.log("Disconnecting from adatper "+adapterId);
+      this.store.disconnectAdapter(adapterId);
     }
   },
-  mounted(){
-
-  }
 };
 
 </script>
@@ -40,7 +45,8 @@ export default {
           <small v-if="adapter.connected">Connected</small>
         </div>
         <p class="mb-1">{{adapter.ipAddress}}:{{adapter.portNumber}}</p>
-        <button class="btn bg-white" @click="connectAdapter(adapter.adapterId)">Connect</button>
+        <button v-if="!adapter.connected" class="btn bg-white" @click="connectAdapter(adapter.adapterId)">Connect</button>
+        <button v-if="adapter.connected" class="btn bg-white" @click="disconnectAdapter(adapter.adapterId)">Disconnect</button>
       </a>
     </div>
     <router-link to="/adapter/add" class="list-group-item list-group-item-action">

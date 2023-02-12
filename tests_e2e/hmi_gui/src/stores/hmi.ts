@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import SocketSerivce from '@/socket/socket'
 
 export interface AdapterInfo {
     adapterId: number
@@ -61,6 +62,33 @@ export const useHmiStore = defineStore('hmi', {
             if(id < 0) return false;
             this.adapters.slice(id, 1);
             return true;
-        }
+        },
+        connectAdapter(adapterId: number){
+            // console.log("Connecting to adatper "+adapterId);
+            let adapter = this.getAdapter(adapterId);
+            if(adapter){
+              SocketSerivce.connectSocket(adapter.ipAddress, adapter.portNumber);
+              adapter.connected = true;
+              this.updateAdapter(adapter);
+            }
+        },
+        disconnectAdapter(adapterId: number){
+            // console.log("Disconnecting from adatper "+adapterId);
+            let adapter = this.getAdapter(adapterId);
+            if(adapter){
+                SocketSerivce.disconnectSocket();
+                adapter.connected = false;
+                this.updateAdapter(adapter);
+            }
+        },
+        socketHandlers(adapter: AdapterInfo){
+            // On emit and received
+            SocketSerivce.getSocket().on("connect", () => {
+                console.log("Connected to adapter "+adapter.adapterName);
+            });
+            SocketSerivce.getSocket().on("disconnect", () => {
+                console.log("Disconencted from adapter "+adapter.adapterName);
+            });
+        },
     },
 })

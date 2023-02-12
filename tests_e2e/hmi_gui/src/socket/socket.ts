@@ -1,36 +1,17 @@
 import { io, Socket } from "socket.io-client";
-import { useHmiStore } from '@/stores/hmi'
-// import type { AdapterInfo } from "@/stores/hmi";
 
 class SocketService {
 
-    socket?: Socket;
-    store = useHmiStore()
+    socket: Socket;
 
     constructor(){
-        // Not used
+        this.socket = io("localhost:4000", { // Set default in hmi.json
+            autoConnect: false
+        })
     }
 
     addHandlers(){
         // On receive, Emit
-    }
-
-    connectAdapter(adapterId: number){
-        let adapter = this.store.getAdapter(adapterId);
-        if(adapter){
-            this.connectSocket(adapter.ipAddress, adapter.portNumber);
-            adapter.connected = true;
-            this.store.updateAdapter(adapter);
-        }
-    }
-
-    disconnectAdapter(adapterId: number){
-        let adapter = this.store.getAdapter(adapterId);
-        if(adapter){
-            this.disconnectSocket();
-            adapter.connected = false;
-            this.store.updateAdapter(adapter);
-        }
     }
 
     connectSocket(ipAddress: string, portNumber: number){
@@ -43,6 +24,10 @@ class SocketService {
         if(this.socket) {
             this.socket.disconnect();
         }
+    }
+
+    getSocket(){
+        return this.socket;
     }
 }
 

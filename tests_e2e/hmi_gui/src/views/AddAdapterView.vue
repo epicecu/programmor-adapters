@@ -15,8 +15,6 @@ export default {
   },
   methods:{
   },
-  mounted(){
-  },
   components:{
     ActionbarComponent
   }
