@@ -1,7 +1,7 @@
 <script lang="ts">
 import { useHmiStore } from '@/stores/hmi'
+import { AdapterStatus } from '@/stores/hmi';
 import { storeToRefs } from 'pinia';
-import SocketSerivce from '@/socket/socket'
 
 export default {
   setup(){
@@ -11,6 +11,7 @@ export default {
     return {
       store,
       adapters,
+      AdapterStatus
     }
   },
   data(){
@@ -32,7 +33,6 @@ export default {
     }
   },
 };
-
 </script>
 
 <template>
@@ -41,12 +41,15 @@ export default {
       <a @click="selectAdapter(adapter.adapterId)" href="#" class="list-group-item list-group-item-action" v-bind:class="selected==adapter.adapterId?'active':''" aria-current="true">
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{adapter.adapterName}}</h5>
-          <small v-if="!adapter.connected">Disconnected</small>
-          <small v-if="adapter.connected">Connected</small>
+          <small v-if="adapter.status === AdapterStatus.Disconencted">Disconnected</small>
+          <small v-if="adapter.status === AdapterStatus.Connected">Connected</small>
+          <small v-if="adapter.status === AdapterStatus.Failed">Failed</small>
+          <small v-if="adapter.status === AdapterStatus.Connecting">Connecting</small>
+          <small v-if="adapter.status === AdapterStatus.Unavailable">Unavailable</small>
         </div>
         <p class="mb-1">{{adapter.ipAddress}}:{{adapter.portNumber}}</p>
-        <button v-if="!adapter.connected" class="btn bg-white" @click="connectAdapter(adapter.adapterId)">Connect</button>
-        <button v-if="adapter.connected" class="btn bg-white" @click="disconnectAdapter(adapter.adapterId)">Disconnect</button>
+        <button v-if="adapter.status === AdapterStatus.Disconencted" class="btn bg-white" @click="connectAdapter(adapter.adapterId)">Connect</button>
+        <button v-if="adapter.status === AdapterStatus.Connected || adapter.status === AdapterStatus.Failed || adapter.status === AdapterStatus.Unavailable" class="btn bg-white" @click="disconnectAdapter(adapter.adapterId)">Disconnect</button>
       </a>
     </div>
     <router-link to="/adapter/add" class="list-group-item list-group-item-action">

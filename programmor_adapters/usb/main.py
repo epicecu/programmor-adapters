@@ -71,6 +71,7 @@ def main():
 
     # Flask application
     app = Flask(__name__)
+    app.config['SECRET_KEY'] = 'secret!ya'
 
     # Programmor Adapter Endpoints to the GUI
     rest = RestEndpoint(app, api)

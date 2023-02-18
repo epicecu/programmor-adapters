@@ -1,0 +1,32 @@
+// @import 'bootstrap/dist/css/bootstrap.min.css';
+
+// Override
+$primary: #4A4A4A;
+$secondary: #8D99AE;
+$success: #70A288;
+$info: #FFE5D4;
+$warning: #F3DE8A;
+$danger: #EB9486;
+$light: #F9F8F8;
+$dark: #0f0f0f;
+
+@import 'bootstrap/scss/bootstrap';
+
+.min-100 {
+  min-height: 100%;
+}
+.no-padding{
+  padding: 0;
+}
+.no-margin{
+  margin: 0;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+}
+
+#app{
+  height: 100%;
+}

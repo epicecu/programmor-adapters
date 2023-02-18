@@ -34,12 +34,13 @@ class SocketEndpoint(Endpoint):
             """
             logger.info("Socket client disconnected")
 
-        def get_devices(self):
+        def on_get_devices(self, _):
             """Get Devices
             """
+            print("get devices")
             emit('devices', self.api.get_devices())
 
-        def check_status(self, device_id: str):
+        def on_check_status(self, device_id: str):
             """Check Status
             
             GET: /api/check_status
@@ -49,7 +50,7 @@ class SocketEndpoint(Endpoint):
             """
             emit('status', self.api.check_device(device_id))
 
-        def connect_device(self, device_id: str):
+        def on_connect_device(self, device_id: str):
             """Connect Devices
 
             GET: /api/connect_device/<device_id>/
@@ -59,7 +60,7 @@ class SocketEndpoint(Endpoint):
             """
             emit('connected', self.api.connect_device(device_id))
 
-        def disconnect_device(self, device_id: str):
+        def on_disconnect_device(self, device_id: str):
             """Disconnect Device
 
             GET: /api/disconnect_device/<device_id>/
@@ -69,7 +70,7 @@ class SocketEndpoint(Endpoint):
             """
             emit('disconnected', self.api.disconnect_device(device_id))
 
-        def request_share(self, device_id: str, share_id: int):
+        def on_request_share(self, device_id: str, share_id: int):
             """Request Share
 
             GET: /api/request_share/<device_id>/<share_id>/
@@ -81,7 +82,7 @@ class SocketEndpoint(Endpoint):
             """
             self.api.request_share(device_id, share_id, 1)
 
-        def publish_share(self, device_id: str, share_id:int, data_urlfriendly: str):
+        def on_publish_share(self, device_id: str, share_id:int, data_urlfriendly: str):
             """Publish Share
             The data should be encoded using a base64 url friendly function
 
@@ -99,7 +100,7 @@ class SocketEndpoint(Endpoint):
             data = base64.urlsafe_b64decode(data_urlfriendly_mod)
             self.api.publish_share(device_id, share_id, data)
 
-        def set_scheduled_message(self, device_id: str, share_id: int, interval: int):
+        def on_set_scheduled_message(self, device_id: str, share_id: int, interval: int):
             """Set Scheduled Message
 
             GET: /api/set_scheduled_message/<device_id>/<share_id>/<interval>/
@@ -113,7 +114,7 @@ class SocketEndpoint(Endpoint):
             """
             self.api.set_scheduled_message(device_id, share_id, interval)
 
-        def clear_scheduled_message(self, device_id: str, share_id: int):
+        def on_clear_scheduled_message(self, device_id: str, share_id: int):
             """Clear Scheduled Message
 
             GET: /api/clear_scheduled_message/<device_id>/<share/
@@ -129,7 +130,7 @@ class SocketEndpoint(Endpoint):
     """
     def __init__(self, app: Flask, api: API) -> None:
         super().__init__(app, api)
-        self.socket: SocketIO = SocketIO(app)
+        self.socket: SocketIO = SocketIO(app, cors_allowed_origins="*")
         ns = self.ApiNamespace('/api')
         ns.api = api
         ns.api.register_callback(lambda data: self.emit_data(data))

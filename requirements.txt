@@ -5,4 +5,5 @@ tinydb
 Flask
 Flask-SocketIO
 flask-classful
+eventlet
 werkzeug==2.1.2

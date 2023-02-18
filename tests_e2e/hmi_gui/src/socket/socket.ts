@@ -15,9 +15,11 @@ class SocketService {
     }
 
     connectSocket(ipAddress: string, portNumber: number){
-        const url = ipAddress+":"+portNumber;
+        const url = ipAddress+":"+portNumber+"/api";
         console.log("Connecting to adapter at "+url);
-        this.socket = io(url);
+        this.socket = io(url, {
+            reconnectionAttempts: 5
+        });
     }
 
     disconnectSocket(){

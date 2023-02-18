@@ -11,7 +11,7 @@ help:
 .PHONY: run
 run:
 	@source venv/bin/activate
-	@python src/programmor
+	@python -m usb
 
 # help: venv				- creates a virtual environment
 .PHONY: venv

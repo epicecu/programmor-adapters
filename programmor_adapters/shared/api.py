@@ -67,7 +67,7 @@ class API(threading.Thread):
         self.scheduled: List[ScheduledRequest] = list()
         # API
         self.connections: Dict[str, Comm] = dict()
-        self.fns: List[str, Callable[[bytes], None]] = dict()
+        self.fns: List[Callable[[bytes], None]] = list()
         self.transactions: List[RequestRecord] = list()
         self.db = TinyDB(f"{database_storage_file}")
         self.comm = comms_method
