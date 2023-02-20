@@ -38,7 +38,7 @@ corelib::HandleMessageState usingProto(corelib::Buffer* buffer)
     /**
      * Handle the Share requests & Common requests
      */
-    if(inMessage.action == TransactionMessage_Action_COMMON){
+    if(inMessage.action == TransactionMessage_Action_COMMON || inMessage.action == TransactionMessage_Action_REQUEST){
         // Response
         TransactionMessage outMessage = TransactionMessage_init_zero;
         pb_ostream_t outStream = pb_ostream_from_buffer(buffer->outBuffer, sizeof(buffer->outBuffer));
@@ -47,7 +47,6 @@ corelib::HandleMessageState usingProto(corelib::Buffer* buffer)
         outMessage.action = TransactionMessage_Action_RESPONSE;
 
         // Common message request
-        if(inMessage.action == TransactionMessage_Action_COMMON){
         if(inMessage.shareId == 1){
             Common1 common1 = Common1_init_zero;
             common1.id = 2;
@@ -62,7 +61,12 @@ corelib::HandleMessageState usingProto(corelib::Buffer* buffer)
             outMessage.shareId = 1;
             outMessage.dataLength = common1Stream.bytes_written;
         }
+        
+        if(!pb_encode(&outStream, TransactionMessage_fields, &outMessage)){
+            // Failed to encode
+            return corelib::HandleMessageState::FAILED_ENCODE;
         }
+        buffer->outMessageLength = outStream.bytes_written;
 
     }
 
@@ -70,4 +74,4 @@ corelib::HandleMessageState usingProto(corelib::Buffer* buffer)
     buffer->inIndex = 0;
 
     return corelib::HandleMessageState::OK;
-    }
+}

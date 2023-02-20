@@ -7,17 +7,18 @@ export default {
   setup(){
     // const socket
     const store = useHmiStore()
-    const { adapters, connectedAdapter } = storeToRefs(store)
+    const { adapters, devices, connectedAdapter } = storeToRefs(store)
     return {
       store,
       adapters,
+      devices,
       connectedAdapter
     }
   },
   data(){
     return {
       selected: 0 as number,
-      devices: this.getDevices()
+      _devices: this.getDevices()
     }
   },
   methods:{
@@ -41,6 +42,9 @@ export default {
     disconnectAdapter(adapterId: number){
       console.log("Disconnecting from adatper "+adapterId);
       this.store.disconnectAdapter(adapterId);
+    },
+    requestDetailedDevices(){
+      this.store.requestDetailedDevices();
     }
   },
 };
@@ -53,14 +57,14 @@ export default {
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{device.deviceName}}</h5>
         </div>
-        <p class="mb-1">{{device.firmware}}</p>
+        <p class="mb-1">{{device.firmwareVersion}}</p>
       </a>
     </div>
-    <router-link to="/" class="list-group-item list-group-item-action" v-if="connectedAdapter > -1">
+    <div to="/" class="list-group-item list-group-item-action" v-if="connectedAdapter > -1" @click="requestDetailedDevices">
       <p class="mb-1">
         Update
       </p>
-    </router-link>
+    </div>
   </div>
   <p class="mb-1" v-if="connectedAdapter < 0">
     Connect to an Adapter to view available devices

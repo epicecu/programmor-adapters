@@ -37,8 +37,12 @@ class SocketEndpoint(Endpoint):
         def on_get_devices(self, _):
             """Get Devices
             """
-            print("get devices")
             emit('devices', self.api.get_devices())
+
+        def on_get_devices_detailed(self, _):
+            """Get Devices Detailed
+            """
+            emit('devices_detailed', self.api.get_devices_detailed())
 
         def on_check_status(self, device_id: str):
             """Check Status

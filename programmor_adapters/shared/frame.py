@@ -33,7 +33,7 @@ class Frame:
     frameId: int = 1
     frameOrder: int = 1  # this frame's order
     frameTotal: int = 1  # total amount of frames for the message
-    payload: bytes = bytes()  # size of 47 bytes
+    payload: bytes = bytes()  # size of 50 bytes
     crc: int = 0  # check sum of the all the above variables
 
     def __init__(self, frame_bytes: bytes = None) -> None:
@@ -60,7 +60,7 @@ class Frame:
 
     def from_bytes(self, frame_bytes: bytes):
         if len(frame_bytes) != 64:
-            raise Exception("Bytes length does not equal 64")
+            raise Exception(f"Bytes length {len(frame_bytes)} does not equal 64")
         # Unpack
         self.preamble = struct.unpack("<H", frame_bytes[0:2])[0]
         self.destinationAddress = struct.unpack("<B", frame_bytes[2:3])[0]

@@ -6,7 +6,6 @@
                 "adapterName": "USB",
                 "ipAddress": "localhost",
                 "portNumber": 5000,
-                "connected": false,
                 "lastRequest": null
             }
         ]

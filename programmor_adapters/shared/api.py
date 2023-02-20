@@ -2,7 +2,7 @@ from shared.comm import Comm
 from shared.datetime import diff_ms
 from datetime import datetime
 from time import sleep
-from typing import List, Dict, Any, Protocol, Callable
+from typing import List, Dict, Any, Protocol, Callable, Tuple
 from uuid import uuid4
 from tinydb import TinyDB, Query
 import threading
@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Defaults
 DATA_MAX_SIZE = 80
+TRANSACTION_MESSAGE_SIZE = 99
 
 """Developer Notes:
 Tiny DB Reference - https://tinydb.readthedocs.io/en/latest/getting-started.html
@@ -155,6 +156,33 @@ class API(threading.Thread):
         """
         comm = self.comm() # This may be an anti pattern, fix latter
         return comm.get_devices()
+    
+    def get_devices_detailed(self) -> List[object]:
+        """Get Devices Detailed
+        """
+        device_ids = self.get_devices()
+        devices = list()
+        # Request the common 1 message for each device
+        for device_id in device_ids:
+            self.connect_device(device_id)
+            common = transaction_pb2.Common1()
+            try:
+                common.ParseFromString(self.request_common_sync(device_id, 1))
+            except BaseException as e:
+                print(f"Failed to parse common message: {e}")
+                continue
+            device = {
+                "adapterDeviceId": device_id,
+                "id": common.id, #NOTE: Not sure why we need this, might go
+                "name": common.deviceName,
+                "registryId": common.registryId,
+                "serialNumber": common.serialNumber,
+                "sharesVersion": common.sharesVersion,
+                "firmwareVersion": common.firmwareVersion
+            }
+            devices.append(device)
+            self.disconnect_device(device_id)
+        return devices
 
     def get_device(self, device_id: str) -> Comm:
         """Gets a connected Comms device by id, returns None if the device is not connected.
@@ -195,6 +223,7 @@ class API(threading.Thread):
         print("Creating a new comms obj")
         self.connections[device_id] = self.comm()
         self.connections[device_id].set_received_message_callback(lambda data: self._on_receive(device_id, data))
+        self.connections[device_id].get_devices()
         self.connections[device_id].start()
         if not self.connections[device_id].connect(device_id):
             logger.debug(f"Failed to connect to device {device_id}")
@@ -247,7 +276,7 @@ class API(threading.Thread):
         # Send data
         device.send_message(request_message_bytes)
 
-    async def request_share_async(self, device_id: str, shareId: int, timeout_s: float = 1) -> bytes:
+    def request_share_sync(self, device_id: str, shareId: int, timeout_s: float = 1) -> bytes:
         """Request a Share from the Comms device and wait for a response within the timeout.
 
         :param device_id: A Comms device id
@@ -266,10 +295,36 @@ class API(threading.Thread):
         request_message_bytes = self._request_message(shareId).SerializeToString()
         response = transaction_pb2.TransactionMessage()
         try:
-            response.ParseFromString(await device.send_then_receive_message(request_message_bytes, timeout_s))
+            response.ParseFromString(bytes(device.send_then_receive_message(request_message_bytes, timeout_s)[0:TRANSACTION_MESSAGE_SIZE]))
         except BaseException:
             return bytes(0)
-        return response.data
+        return response.data[0:response.dataLength]
+
+    def request_common_sync(self, device_id: str, shareId: int, timeout_s: float = 1) -> bytes:
+        """Request a Common from the Comms device and wait for a response within the timeout.
+
+        :param device_id: A Comms device id
+        :type device_id: str
+        :param shareId: A share id
+        :type shareId: int
+        :param timeout_s: Waiting timeout in seconds
+        :type timeout_s: float 
+        :return: A response share
+        :rtype: bytes
+        """
+        device = self.get_device(device_id)
+        if device == None:
+            return bytes(0)
+        # Common share from device
+        common_message_bytes = self._common_message(shareId).SerializeToString()
+        response = transaction_pb2.TransactionMessage()
+        try:
+            data = device.send_then_receive_message(common_message_bytes, timeout_s)
+            response.ParseFromString(bytes(data[0:TRANSACTION_MESSAGE_SIZE]))
+        except BaseException as e:
+            logger.debug(f"Failed to parse respose {e}")
+            return bytes(0)
+        return response.data[0:response.dataLength]
 
     def publish_share(self, device_id: str, shareId: int, data: bytes) -> None:
         """Publish a Share to the Comms device
@@ -338,6 +393,22 @@ class API(threading.Thread):
         # print(publishMessage.data.hex(" "))
         return publishMessage
 
+    def _common_message(self, shareId: int) -> transaction_pb2.TransactionMessage:
+        """A Common Message
+
+        :param shareId: A share id
+        :type shareId: int
+        :return: A transaction message
+        :rtype: transaction_pb2.TransactionMessage
+        """
+        commonMessage = transaction_pb2.TransactionMessage()
+        commonMessage.token = uuid4().int >> 96
+        commonMessage.action = transaction_pb2.TransactionMessage.COMMON
+        commonMessage.shareId = shareId
+        commonMessage.dataLength = 1
+        commonMessage.data = bytes(DATA_MAX_SIZE)
+        return commonMessage
+
     def get_shares(self, device_id:str, to_time: datetime, from_time: datetime, shareId: int) -> List[bytes]:
         """Get a range of shares from the database.
 
@@ -367,11 +438,12 @@ class API(threading.Thread):
         """
         response = transaction_pb2.TransactionMessage()
         try:
-            response.ParseFromString(data)
+            response.ParseFromString(bytes(data[0:TRANSACTION_MESSAGE_SIZE]))
         except BaseException:
             return
         # Confirm the received data is in response to a transaction
         filtered_transactions = filter(lambda record: record.id == response.token and record.device_id == device_id, self.transactions)
+        filtered_transactions = list(filtered_transactions)
         if len(filtered_transactions) == 0:
             logger.debug("Could not match received data to a transaction record")
             return
@@ -383,7 +455,7 @@ class API(threading.Thread):
         # Save data to database
         self.db.insert({"id": metadata.id, "device": device_id, "action": response.action, "shareId": response.shareId ,"data": response.data, "requestedAt": metadata.sent_at, "receivedAt": metadata.received_at})
         # Pass data to callback functions
-        self._callback(response.data)
+        self._callback(response.data[0:response.dataLength])
 
     def register_callback(self, fn: Callable[[bytes], None]) -> None:
         """Register a receive callback function.

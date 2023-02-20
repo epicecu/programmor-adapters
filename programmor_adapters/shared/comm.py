@@ -189,7 +189,7 @@ class Comm(threading.Thread):
 
         return ProcessState.OK
 
-    async def send_then_receive_message(self, message_bytes: bytes, wait_s: float = 0.5) -> bytes:
+    def send_then_receive_message(self, message_bytes: bytes, wait_s: float = 0.5) -> bytes:
         """Send a message then wait for a response.
 
         :param message_bytes: Data to send to the device
@@ -203,7 +203,8 @@ class Comm(threading.Thread):
         self.messages_outgoing.put(message_bytes)
         startTime = perf_counter()
         while ((perf_counter() - startTime) < wait_s):
-            asyncio.sleep(0.001)
+            #asyncio.sleep(0.001)
+            sleep(0.001)
             if self.lastMessage != oldMessage:
                 return self.lastMessage
         return bytes(0)

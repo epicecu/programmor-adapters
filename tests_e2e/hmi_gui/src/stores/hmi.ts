@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import SocketSerivce from '@/socket/socket'
+import { compile } from 'vue'
 
 export enum AdapterStatus {
     Failed = -2,
@@ -21,6 +22,7 @@ export interface AdapterInfo {
 
 export interface DeviceInfo {
     adapterId: number, // Links to the AdapterInfo
+    adapterDeviceId: string, // Adapter generated device id
     registryId: number,
     serialNumber: number,
     sharesVersion: number,
@@ -97,6 +99,8 @@ export const useHmiStore = defineStore('hmi', {
                 adapter.status = AdapterStatus.Disconencted;
                 this.connectedAdapter = -1;
                 this.updateAdapter(adapter);
+                // Remove devices for this adapter
+                
             }
         },
         disconnectAll(){
@@ -140,7 +144,30 @@ export const useHmiStore = defineStore('hmi', {
                 }
             });
             // Handle API
-
+            SocketSerivce.getSocket().on("devices_detailed", (responseDevices) => {
+                console.log("Handle devices_detailed")
+                // Clear devices
+                // this.devices = [] as DeviceInfo[];
+                // Add devices to list
+                responseDevices.forEach((responseDevice: any) => {
+                    let device = {} as DeviceInfo;
+                    device.adapterId = this.connectedAdapter;
+                    device.connected = false;
+                    device.adapterDeviceId = responseDevice["adapterDeviceId"]
+                    device.deviceName = responseDevice["name"]
+                    device.firmwareVersion = responseDevice["firmwareVersion"]
+                    device.registryId = responseDevice["registryId"]
+                    device.serialNumber = responseDevice["serialNumber"]
+                    device.sharesVersion = responseDevice["sharesVersion"]
+                    this.devices.push(device);
+                    console.log(device);
+                });
+            })
         },
+        requestDetailedDevices(){
+            if(this.getAdapter(this.connectedAdapter)?.status === AdapterStatus.Connected){
+                SocketSerivce.getSocket().emit("get_devices_detailed", "_");
+            }
+        }
     },
 })
