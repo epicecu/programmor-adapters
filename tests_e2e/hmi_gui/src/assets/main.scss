@@ -1,14 +1,22 @@
 // @import 'bootstrap/dist/css/bootstrap.min.css';
 
 // Override
-$primary: #4A4A4A;
-$secondary: #8D99AE;
-$success: #70A288;
-$info: #FFE5D4;
-$warning: #F3DE8A;
-$danger: #EB9486;
-$light: #F9F8F8;
-$dark: #0f0f0f;
+$white: #ffffff;
+
+$theme-colors: (
+  "light":      #f4ead8,
+  "dark":       #0b0402,
+  "primary":    #3a3e2b,
+  "secondary":  #9d7f27,
+  "info":       #d39125,
+  "accent1":    #d78db8,
+  "accent2":    #e166d2,
+  "accent3":    #e8b9cd,
+  "success":    #3cb815,
+  "warning":    #ffc746,
+  "danger":     #fa0856,
+);
+
 
 @import 'bootstrap/scss/bootstrap';
 

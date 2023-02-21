@@ -57,7 +57,7 @@ export default {
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{device.deviceName}}</h5>
         </div>
-        <p class="mb-1">{{device.firmwareVersion}}</p>
+        <p class="mb-1">Adapter device Id: {{ device.adapterDeviceId }}</p>
       </a>
     </div>
     <div to="/" class="list-group-item list-group-item-action" v-if="connectedAdapter > -1" @click="requestDetailedDevices">

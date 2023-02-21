@@ -50,8 +50,13 @@ export const useHmiStore = defineStore('hmi', {
             // Returns all the devices for the given adapterId
             return (adapterId: number) => state.devices.filter((device) => device.adapterId == adapterId)
         },
+        getDevice: (state) => {
+            // Returns all the devices for the given adapterId
+            return (deviceId: string) => state.devices.filter((device) => device.adapterDeviceId == deviceId)
+        },
     },
     actions: {
+        // Adapter state functions
         addAdapter(adapter: AdapterInfo): number{
             if(adapter.adapterId === undefined || adapter.adapterId === null){
                 const lastAdapter = this.adapters.at(-1);
@@ -65,17 +70,45 @@ export const useHmiStore = defineStore('hmi', {
             return adapter.adapterId
         },
         updateAdapter(updatedAdapter: AdapterInfo): boolean{
-            const id = this.adapters.findIndex((adapter) => adapter.adapterId == updatedAdapter.adapterId);
+            const id = this.adapters.findIndex((adapter) => adapter.adapterId === updatedAdapter.adapterId);
             if(id < 0) return false;
             this.adapters[id] = updatedAdapter;
             return true;
         },
         removeAdapter(adapterId: number): boolean{
-            const id = this.adapters.findIndex((adapter) => adapter.adapterId == adapterId);
+            const id = this.adapters.findIndex((adapter) => adapter.adapterId === adapterId);
             if(id < 0) return false;
-            this.adapters.slice(id, 1);
+            this.adapters.splice(id, 1);
             return true;
         },
+        // Device state functions
+        addDevice(device: DeviceInfo){
+            const foundDevice = this.getDevice(device.adapterDeviceId);
+            if(foundDevice.length === 0){
+                this.devices.push(device);
+            }else{
+                this.updateDevice(device);
+            }
+        },
+        updateDevice(updatedDevice: DeviceInfo): boolean{
+            const id = this.devices.findIndex((device) => device.adapterDeviceId === updatedDevice.adapterDeviceId);
+            if(id < 0) return false;
+            this.devices[id] = updatedDevice;
+            return true;
+        },
+        removeDevice(deviceId: string){
+            const id = this.devices.findIndex((device) => device.adapterDeviceId === deviceId);
+            if(id < 0) return false;
+            this.devices.splice(id, 1);
+            return true;
+        },
+        removeAllDevicesForAdapter(adapterId: number){
+            const devices = this.getDevices(adapterId);
+            devices.forEach(device => {
+                const r = this.removeDevice(device.adapterDeviceId);
+            });
+        },
+        // Action functions
         connectAdapter(adapterId: number){
             console.log("Connecting to adatper "+adapterId);
             this.disconnectAll();
@@ -100,7 +133,7 @@ export const useHmiStore = defineStore('hmi', {
                 this.connectedAdapter = -1;
                 this.updateAdapter(adapter);
                 // Remove devices for this adapter
-                
+                this.removeAllDevicesForAdapter(adapterId);
             }
         },
         disconnectAll(){
@@ -159,7 +192,7 @@ export const useHmiStore = defineStore('hmi', {
                     device.registryId = responseDevice["registryId"]
                     device.serialNumber = responseDevice["serialNumber"]
                     device.sharesVersion = responseDevice["sharesVersion"]
-                    this.devices.push(device);
+                    this.addDevice(device);
                     console.log(device);
                 });
             })

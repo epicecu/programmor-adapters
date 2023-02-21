@@ -3,7 +3,7 @@
 
 <template>
   <div class="app-inner container-fluid min-100 d-flex flex-column">
-    <nav class="navbar navbar-expand bg-light flex-shrink-0 app-header">
+    <nav class="navbar navbar-expand bg-white flex-shrink-0 app-header">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">
           <img alt="Programmor Adapter HMI Test App"  src="@/assets/epicecu-programmor-logo.png" height="55">

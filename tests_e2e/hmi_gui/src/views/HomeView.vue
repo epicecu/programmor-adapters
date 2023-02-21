@@ -10,7 +10,7 @@
     <span class="nav-link text-light">Connect to Adapter</span>
 </li>
 </actionbar-component>
-<div class="row no-margin no-padding flex-grow-1">
+<div class="row no-margin no-padding flex-grow-1 bg-light">
     <div class="col-2 border-end no-padding">
         <AdapterView />
     </div>
