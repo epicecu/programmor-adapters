@@ -1,5 +1,5 @@
 <script lang="ts">
-import { useHmiStore } from '@/stores/hmi'
+import { useHmiStore, AdapterStatus } from '@/stores/hmi'
 import type { AdapterInfo } from '@/stores/hmi'
 import { storeToRefs } from 'pinia'
 import ActionbarComponent from '@/views/ActionBarComponent.vue'
@@ -38,6 +38,7 @@ export default {
       newAdapter.ipAddress = this.ipAddress;
       newAdapter.portNumber = this.portNumber;
       newAdapter.connected = false;
+      newAdapter.status = AdapterStatus.Disconencted;
       const adapterId = this.store.addAdapter(newAdapter);
       if(adapterId > 0){
         console.log("Okay");

@@ -22,6 +22,7 @@ export default {
   methods:{
     selectAdapter(id: number){
       this.selected = id;
+      //v-bind:class="selected==adapter.adapterId?'active':''"
     },
     connectAdapter(adapterId: number){
       console.log("Connecting to adatper "+adapterId);
@@ -38,7 +39,7 @@ export default {
 <template>
   <div class="list-group list-group-flush border-bottom scrollarea">
     <div v-for="(adapter) in adapters">
-      <a @click="selectAdapter(adapter.adapterId)" href="#" class="list-group-item list-group-item-action" v-bind:class="selected==adapter.adapterId?'active':''" aria-current="true">
+      <a @click="selectAdapter(adapter.adapterId)" href="#" class="list-group-item list-group-item-action" v-bind:class="adapter.status===AdapterStatus.Connected?'active':''" aria-current="true">
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">{{adapter.adapterName}}</h5>
           <small v-if="adapter.status === AdapterStatus.Disconencted">Disconnected</small>
