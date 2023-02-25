@@ -1,6 +1,7 @@
 from shared.endpoint import Endpoint
 from shared.api import API
-from flask import Flask
+from shared.types import ResponseType
+from flask import Flask, copy_current_request_context
 from flask_socketio import SocketIO, Namespace, emit
 import base64
 
@@ -33,6 +34,7 @@ class SocketEndpoint(Endpoint):
             """Client Disconnects
             """
             logger.info("Socket client disconnected")
+            self.api.disconnect_all_devices()
 
         def on_get_devices(self, _):
             """Get Devices
@@ -46,8 +48,6 @@ class SocketEndpoint(Endpoint):
 
         def on_check_status(self, device_id: str):
             """Check Status
-            
-            GET: /api/check_status
 
             :param device_id: A Programmor compatible device id
             :type device_id: str
@@ -57,40 +57,38 @@ class SocketEndpoint(Endpoint):
         def on_connect_device(self, device_id: str):
             """Connect Devices
 
-            GET: /api/connect_device/<device_id>/
-
             :param device_id: A Programmor compatible device id
             :type device_id: str
             """
-            emit('connected', self.api.connect_device(device_id))
+            if self.api.connect_device(device_id):
+                emit('connected', device_id)
+            else:
+                emit('connected_failed', device_id)
 
         def on_disconnect_device(self, device_id: str):
             """Disconnect Device
 
-            GET: /api/disconnect_device/<device_id>/
-
             :param device_id: A Programmor compatible device id
             :type device_id: str
             """
-            emit('disconnected', self.api.disconnect_device(device_id))
+            if self.api.disconnect_device(device_id):
+                emit('disconnected', device_id)
+            else:
+                emit('disconnected_failed', device_id)
 
         def on_request_share(self, device_id: str, share_id: int):
             """Request Share
-
-            GET: /api/request_share/<device_id>/<share_id>/
 
             :param device_id: A Programmor compatible device id
             :type device_id: str
             :param share_id: Protobuf model share id
             :type device_id: str
             """
-            self.api.request_share(device_id, share_id, 1)
+            self.api.request_share(device_id, share_id)
 
         def on_publish_share(self, device_id: str, share_id:int, data_urlfriendly: str):
             """Publish Share
             The data should be encoded using a base64 url friendly function
-
-            GET: /api/publish_share/<device_id>/<share_id>/<data>/
 
             :param device_id: A Programmor compatible device id
             :type device_id: str
@@ -107,8 +105,6 @@ class SocketEndpoint(Endpoint):
         def on_set_scheduled_message(self, device_id: str, share_id: int, interval: int):
             """Set Scheduled Message
 
-            GET: /api/set_scheduled_message/<device_id>/<share_id>/<interval>/
-
             :param device_id: A Programmor compatible device id
             :type device_id: str
             :param share_id: Protobuf model share id
@@ -121,8 +117,6 @@ class SocketEndpoint(Endpoint):
         def on_clear_scheduled_message(self, device_id: str, share_id: int):
             """Clear Scheduled Message
 
-            GET: /api/clear_scheduled_message/<device_id>/<share/
-
             :param device_id: A Programmor compatible device id
             :type device_id: str
             :param share_id: Protobuf model share id
@@ -134,18 +128,16 @@ class SocketEndpoint(Endpoint):
     """
     def __init__(self, app: Flask, api: API) -> None:
         super().__init__(app, api)
-        self.socket: SocketIO = SocketIO(app, cors_allowed_origins="*")
-        ns = self.ApiNamespace('/api')
-        ns.api = api
-        ns.api.register_callback(lambda data: self.emit_data(data))
-        self.socket.on_namespace(ns)
+        self.socket: SocketIO = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")
+        self.ns = self.ApiNamespace('/api')
+        self.ns.api = api
+        self.ns.api.register_callback(lambda data: self.emit_data(data))
+        self.socket.on_namespace(self.ns)
 
-    def emit_data(self, data: bytes):
+    def emit_data(self, response: ResponseType):
         """Emit Data
         """
-        encoded = base64.urlsafe_b64encode(data)
-        data_urlfriendly = encoded.rstrip("=")
-        emit('data', data_urlfriendly)
+        self.ns.emit('message_data', response, namespace='/api')
 
     def start(self) -> None:
         """Starts both the Flask, and the Socket app

@@ -24,7 +24,7 @@ defaults.hmi.adapters.forEach((defaultAdapter) => {
     adapter.adapterName = defaultAdapter.adapterName;
     adapter.ipAddress = defaultAdapter.ipAddress;
     adapter.portNumber = defaultAdapter.portNumber;
-    adapter.connected = defaultAdapter.connected;
+    adapter.connected = false;
     adapter.status = AdapterStatus.Disconencted;
     store.addAdapter(adapter);
 });

@@ -1,13 +1,16 @@
 from shared.comm import Comm
 from shared.datetime import diff_ms
+from shared.types import ResponseType
 from datetime import datetime
 from time import sleep
-from typing import List, Dict, Any, Protocol, Callable, Tuple
+from typing import List, Dict, Protocol, Callable
 from uuid import uuid4
 from tinydb import TinyDB, Query
 import threading
+import base64
 
 # Transaction Protobuf File
+from google.protobuf.json_format import MessageToJson
 import shared.proto.transaction_pb2 as transaction_pb2
 
 # Logging
@@ -24,7 +27,7 @@ Writing docs - https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.h
 
 """
 
-class ScheduledRequest(Protocol):
+class ScheduledRequest():
     """Scheduled Request Message Object
     """
     device_id: str
@@ -40,7 +43,7 @@ class ScheduledRequest(Protocol):
         self.updated_at = datetime.now()
 
 
-class RequestRecord(Protocol):
+class RequestRecord():
     """API Tranactions with the device
     """
     id: int
@@ -68,7 +71,7 @@ class API(threading.Thread):
         self.scheduled: List[ScheduledRequest] = list()
         # API
         self.connections: Dict[str, Comm] = dict()
-        self.fns: List[Callable[[bytes], None]] = list()
+        self.fns: List[Callable[[ResponseType], None]] = list()
         self.transactions: List[RequestRecord] = list()
         self.db = TinyDB(f"{database_storage_file}")
         self.comm = comms_method
@@ -172,13 +175,8 @@ class API(threading.Thread):
                 print(f"Failed to parse common message: {e}")
                 continue
             device = {
-                "adapterDeviceId": device_id,
-                "id": common.id, #NOTE: Not sure why we need this, might go
-                "name": common.deviceName,
-                "registryId": common.registryId,
-                "serialNumber": common.serialNumber,
-                "sharesVersion": common.sharesVersion,
-                "firmwareVersion": common.firmwareVersion
+                "deviceId": device_id,
+                "common1": MessageToJson(common)
             }
             devices.append(device)
             self.disconnect_device(device_id)
@@ -220,7 +218,7 @@ class API(threading.Thread):
             logger.info(f"Device already connected {device_id}")
             return False
         # Create USB Connection and connect
-        print("Creating a new comms obj")
+        logger.debug("Creating a new comms obj")
         self.connections[device_id] = self.comm()
         self.connections[device_id].set_received_message_callback(lambda data: self._on_receive(device_id, data))
         self.connections[device_id].get_devices()
@@ -230,7 +228,7 @@ class API(threading.Thread):
             self.connections[device_id].stop()
             del self.connections[device_id]
             return False
-        logger.debug(f"Connected to device {device_id}")
+        logger.info(f"Connected to device {device_id}")
         return True
 
     def disconnect_device(self, device_id: str) -> bool:
@@ -251,6 +249,16 @@ class API(threading.Thread):
             return True
         except:
             return False
+    
+    def disconnect_all_devices(self) -> None:
+        """Disconnects all devices from the adapter
+        """
+        list_of_devices: List[str] = list()
+        for device_id, _ in self.connections.items():
+            list_of_devices.append(device_id)
+        # Stores a list of ids to Prevent the iteration failing for deletion of the connection
+        for device_id in list_of_devices:
+            self.disconnect_device(device_id)
 
     def request_share(self, device_id: str, shareId: int) -> None:
         """Request a Share from the Comms device
@@ -453,11 +461,16 @@ class API(threading.Thread):
         logger.info(metadata)
         self.transactions.remove(metadata)
         # Save data to database
-        self.db.insert({"id": metadata.id, "device": device_id, "action": response.action, "shareId": response.shareId ,"data": response.data, "requestedAt": metadata.sent_at, "receivedAt": metadata.received_at})
+        self.db.insert({"id": metadata.id, "device": device_id, "action": response.action, "shareId": response.shareId ,"data": str(base64.b64encode(response.data)), "requestedAt": str(metadata.sent_at), "receivedAt": str(metadata.received_at)})
         # Pass data to callback functions
-        self._callback(response.data[0:response.dataLength])
+        responseData:bytes = response.data[0:response.dataLength]
+        responseJson: ResponseType = dict()
+        responseJson["deviceId"] = device_id
+        responseJson["shareId"] = int(response.shareId)
+        responseJson["data"] = str(base64.b64encode(responseData))
+        self._callback(responseJson)
 
-    def register_callback(self, fn: Callable[[bytes], None]) -> None:
+    def register_callback(self, fn: Callable[[ResponseType], None]) -> None:
         """Register a receive callback function.
 
         :param fn: Callback function
@@ -470,15 +483,16 @@ class API(threading.Thread):
         """
         self.fns.clear()
 
-    def _callback(self, data: bytes) -> None:
+    def _callback(self, response: ResponseType) -> None:
         """Calls all registered callback functions.
 
-        :param data: Return data from the device
-        :type data: bytes
+        :param response: Return json dict including the deviceId, shareId, and data (base64 encoded)
+        :type response: Dict[str, int, str]
         """
         for fn in self.fns:
             try:
                 # Pass data to callback function
-                fn(data)
-            except:
+                fn(response)
+            except Exception as e:
                 logger.debug("Callback function failed to execute")
+                logger.debug(e)
