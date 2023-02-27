@@ -1,7 +1,8 @@
-import { defineStore } from 'pinia'
+import { defineStore, storeToRefs } from 'pinia'
 import SocketSerivce from '@/socket/socket'
 import { compile } from 'vue'
 import protobuf from 'protobufjs';
+import { useMessageStore } from './message'; 
 
 export enum AdapterStatus {
     Failed = -2,
@@ -17,6 +18,14 @@ export enum DeviceStatus {
     Disconnecting = 1,
     Connecting = 2,
     Connected = 3,
+}
+
+export enum ActionType {
+    NA = 0,
+    COMMON = 1,
+    REQUEST = 2,
+    PUBLISH = 3,
+    RESPONSE = 4,
 }
 
 export interface AdapterInfo {
@@ -260,6 +269,18 @@ export const useHmiStore = defineStore('hmi', {
             }),
             SocketSerivce.getSocket().on("message_data", (transactionData) => {
                 console.log("On receive data: ", transactionData);
+                // Time to parse the data into a protobuf message
+                if(transactionData["actionType"] === ActionType.COMMON || transactionData["actionType"] === ActionType.RESPONSE){
+                    // Pase common message type
+                    const base64: string = transactionData["data"]
+                    // const data: ArrayBuffer = window.atob(base64);
+                    const data = Uint8Array.from(window.atob(base64), (v) => v.charCodeAt(0));
+                    console.log("data", data)
+                    const message = Common1Message.decode(data);
+                    console.log("Parsed message ", message);
+                    const store = useMessageStore()
+                    store.addMessage({"shareId": transactionData["shareId"], "message": message, "createdAt": Date.now()});
+                }
             });
         },
         // Emits

@@ -466,8 +466,9 @@ class API(threading.Thread):
         responseData:bytes = response.data[0:response.dataLength]
         responseJson: ResponseType = dict()
         responseJson["deviceId"] = device_id
+        responseJson["actionType"] = response.action
         responseJson["shareId"] = int(response.shareId)
-        responseJson["data"] = str(base64.b64encode(responseData))
+        responseJson["data"] = str(base64.b64encode(responseData).decode("utf-8"))
         self._callback(responseJson)
 
     def register_callback(self, fn: Callable[[ResponseType], None]) -> None:
