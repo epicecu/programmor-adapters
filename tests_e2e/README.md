@@ -12,4 +12,4 @@ Performs a full end to end test of the Programmor adapter using a test HMI Gui a
 
 ## Hmi
 
-![Hmi Screenshot v1.0.0 Wip](../support/HMI_wip_v1.0.png)
+![Hmi Screenshot v1.0.0 Wip](../support/hmi-wip-v1.0.png)

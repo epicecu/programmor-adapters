@@ -114,6 +114,10 @@ todo
 While in the python virtual environment, navigate to `/documentation` and run the command `make html`
 View the docs in the browser by running `python3 -m http.server -d build/html`
 
+### Communications Flow Chart
+
+![Communications Flow Diagram](support/communications-flow-diagram.png)
+
 ## Donations
 
 **Donations will ensure the following:**
