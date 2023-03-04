@@ -42,6 +42,24 @@ export default {
             this.storeHmi.requestShare(this.device?.deviceId, shareId);
             console.log("Requested Share "+shareId);
         }
+    },
+    setCommonSchedule(shareId: number, interval: number){
+        if(this.device){
+            if(this.device.status === DeviceStatus.Disconencted || this.device.status === DeviceStatus.Failed){
+                return console.warn("Not connected to device "+this.device.deviceId);
+            }
+            this.storeHmi.setCommonSchedule(this.device?.deviceId, shareId, interval);
+            console.log("Set Schedule Common "+shareId+" Interval "+interval);
+        }
+    },
+    clearCommonSchedule(shareId: number){
+        if(this.device){
+            if(this.device.status === DeviceStatus.Disconencted || this.device.status === DeviceStatus.Failed){
+                return console.warn("Not connected to device "+this.device.deviceId);
+            }
+            this.storeHmi.clearCommonSchedule(this.device?.deviceId, shareId);
+            console.log("Clear Schedule Common "+shareId);
+        }
     }
   }
 };
@@ -90,6 +108,10 @@ export default {
             </table>
 
             <button class="btn bg-white" @click="requestCommon(1)">Request Common1 Message</button>
+
+            <button class="btn bg-white" @click="setCommonSchedule(1, 2000)">Set Commmon1 Schedule 2000ms</button>
+
+            <button class="btn bg-white" @click="clearCommonSchedule(1)">Clear Commmon1 Schedule 2000ms</button>
 
             <div class="mt-3">
                 <p>Total messages {{ messages.length }}</p>

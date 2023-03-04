@@ -68,6 +68,7 @@ def main():
 
     # Programmor Adapter API function 
     api = API(USB)
+    api.start()
 
     # Flask application
     app = Flask(__name__)

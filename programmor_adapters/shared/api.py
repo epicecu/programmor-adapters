@@ -34,7 +34,7 @@ class ScheduledRequest():
     message_type: MessageType
     share_id: int
     interval_ms: int
-    last_scheduled: datetime
+    last_scheduled: datetime = datetime.now()
     updated_at: datetime
     created_at: datetime = datetime.now()
     def tick(self):
@@ -42,6 +42,8 @@ class ScheduledRequest():
     def update_interval(self, interval_ms: int):
         self.interval_ms = interval_ms
         self.updated_at = datetime.now()
+    def __str__(self) -> str:
+        return f"ScheduledRequest(device_id: {self.device_id} message_type: {self.message_type} share_id: {self.share_id} interval: {self.interval_ms})"
 
 
 class RequestRecord():
@@ -52,6 +54,8 @@ class RequestRecord():
     sent_at: datetime
     received_at: datetime
     created_at: datetime = datetime.now()
+    def __str__(self) -> str:
+        return f"RequestRecord(id: {self.id} device_id: {self.device_id} sent_at: {self.sent_at} received_at: {self.received_at} created_at: {self.created_at} duration: {self.received_at - self.sent_at})"
 
 
 class API(threading.Thread):
@@ -104,7 +108,7 @@ class API(threading.Thread):
                 break
 
             # Process logic
-            self._process_scheduled_messages(self)
+            self._process_scheduled_messages()
 
             # Sleep the thread
             sleep(0.0001)  # 0.1ms
@@ -117,6 +121,7 @@ class API(threading.Thread):
         for schedule in self.scheduled:
             if diff_ms(datetime.now(), schedule.last_scheduled) > schedule.interval_ms:
                 self.request_message(schedule.device_id, schedule.message_type, schedule.share_id)
+                logger.debug(f"Processing schedule {schedule.share_id} {schedule.interval_ms}")
                 schedule.tick()
 
     def set_scheduled_message(self, device_id: str, message_type: MessageType, shareId: int, interval_ms: float = 100) -> None:
@@ -140,9 +145,11 @@ class API(threading.Thread):
             schedule.share_id = shareId
             schedule.interval_ms = interval_ms
             self.scheduled.append(schedule)
+            logger.info(f"Added schedule {shareId} {interval_ms}")
         else:
             # Update the schedule
             schedule.update_interval(interval_ms)
+            logger.info(f"Updated schedule {shareId} {interval_ms}")
 
     def clear_scheduled_message(self, device_id: str, message_type: MessageType, shareId: int) -> None:
         """Clear Scheduled Message
@@ -155,6 +162,7 @@ class API(threading.Thread):
         schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id == device_id and schedule.message_type == message_type, self.scheduled), None)
         if schedule != None:
             self.scheduled.remove(schedule)
+            logger.info(f"Removed schedule {shareId}")
 
     def get_devices(self) -> List[str]:
         """Returns a list of Programmor compatible device ids.

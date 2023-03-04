@@ -8,7 +8,16 @@
 <template>
 <actionbar-component>
 <li class="nav-item">
-    <span class="nav-link text-light">Connect to Adapter</span>
+    <span class="nav-link text-light">File</span>
+</li>
+<li class="nav-item">
+    <span class="nav-link text-light">Undo</span>
+</li>
+<li class="nav-item">
+    <span class="nav-link text-light">Redo</span>
+</li>
+<li class="nav-item">
+    <span class="nav-link text-light">Help</span>
 </li>
 </actionbar-component>
 <div class="row no-margin no-padding flex-grow-1 bg-light">

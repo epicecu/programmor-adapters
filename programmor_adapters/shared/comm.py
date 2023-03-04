@@ -202,10 +202,13 @@ class Comm(threading.Thread):
         oldMessage = self.lastMessage
         self.messages_outgoing.put(message_bytes)
         startTime = perf_counter()
-        while ((perf_counter() - startTime) < wait_s):
+        currentTime = perf_counter()
+        while ((currentTime - startTime) < wait_s):
             #asyncio.sleep(0.001)
+            currentTime = perf_counter()
             sleep(0.001)
             if self.lastMessage != oldMessage:
+                logger.debug(f"Sent and received message in {currentTime-startTime}ms")
                 return self.lastMessage
         return bytes(0)
 

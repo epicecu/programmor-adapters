@@ -334,6 +334,12 @@ export const useHmiStore = defineStore('hmi', {
         requestPublish(deviceId: string, shareId: number, data: JSON){
 
         },
+        setCommonSchedule(deviceId: string, shareId: number, interval: number){
+            SocketSerivce.getSocket().emit("set_scheduled_common", deviceId, shareId, interval);
+        },
+        clearCommonSchedule(deviceId: string, shareId: number){
+            SocketSerivce.getSocket().emit("clear_scheduled_common", deviceId, shareId);
+        },
         // Others
         updateSelectedDevice(deviceId: string){
             this.selectedDevice = deviceId;
