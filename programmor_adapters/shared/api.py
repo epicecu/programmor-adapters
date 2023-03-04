@@ -1,6 +1,6 @@
 from shared.comm import Comm
 from shared.datetime import diff_ms
-from shared.types import ResponseType
+from shared.types import MessageType, ResponseType
 from datetime import datetime
 from time import sleep
 from typing import List, Dict, Protocol, Callable
@@ -31,6 +31,7 @@ class ScheduledRequest():
     """Scheduled Request Message Object
     """
     device_id: str
+    message_type: MessageType
     share_id: int
     interval_ms: int
     last_scheduled: datetime
@@ -115,10 +116,10 @@ class API(threading.Thread):
         """
         for schedule in self.scheduled:
             if diff_ms(datetime.now(), schedule.last_scheduled) > schedule.interval_ms:
-                self.request_share(schedule.device_id, schedule.share_id)
+                self.request_message(schedule.device_id, schedule.message_type, schedule.share_id)
                 schedule.tick()
 
-    def set_scheduled_message(self, device_id: str, shareId: int, interval_ms: float = 100) -> None:
+    def set_scheduled_message(self, device_id: str, message_type: MessageType, shareId: int, interval_ms: float = 100) -> None:
         """Set Schedule Message
 
         :param device_id: A Comms device id
@@ -129,17 +130,21 @@ class API(threading.Thread):
         :type device_id: float
         """
         # Check if schedule already exists
-        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id == device_id, self.scheduled), None)
+        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id == device_id and schedule.message_type == message_type, self.scheduled), None)
         # Create or modify the schedule
         if schedule == None:
             # Create new schedule
             schedule = ScheduledRequest()
+            schedule.device_id = device_id
+            schedule.message_type = message_type
+            schedule.share_id = shareId
+            schedule.interval_ms = interval_ms
             self.scheduled.append(schedule)
         else:
             # Update the schedule
             schedule.update_interval(interval_ms)
 
-    def clear_scheduled_message(self, device_id: str, shareId: int) -> None:
+    def clear_scheduled_message(self, device_id: str, message_type: MessageType, shareId: int) -> None:
         """Clear Scheduled Message
 
         :param device_id: A Comms device id
@@ -147,7 +152,7 @@ class API(threading.Thread):
         :param shareId: A share id
         :type device_id: int
         """
-        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id == device_id, self.scheduled), None)
+        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id == device_id and schedule.message_type == message_type, self.scheduled), None)
         if schedule != None:
             self.scheduled.remove(schedule)
 
@@ -159,7 +164,7 @@ class API(threading.Thread):
         """
         comm = self.comm() # This may be an anti pattern, fix latter
         return comm.get_devices()
-    
+
     def get_devices_detailed(self) -> List[object]:
         """Get Devices Detailed
         """
@@ -170,7 +175,7 @@ class API(threading.Thread):
             self.connect_device(device_id)
             common = transaction_pb2.Common1()
             try:
-                common.ParseFromString(self.request_common_sync(device_id, 1))
+                common.ParseFromString(self.request_message_sync(device_id, MessageType.COMMON, 1))
             except BaseException as e:
                 print(f"Failed to parse common message: {e}")
                 continue
@@ -249,7 +254,7 @@ class API(threading.Thread):
             return True
         except:
             return False
-    
+
     def disconnect_all_devices(self) -> None:
         """Disconnects all devices from the adapter
         """
@@ -260,7 +265,7 @@ class API(threading.Thread):
         for device_id in list_of_devices:
             self.disconnect_device(device_id)
 
-    def request_share(self, device_id: str, shareId: int) -> None:
+    def request_message(self, device_id: str, message_type: MessageType, shareId: int) -> None:
         """Request a Share from the Comms device
 
         :param device_id: A Comm's device id
@@ -272,7 +277,7 @@ class API(threading.Thread):
         if device == None:
             return
         # Request share from device
-        request_message = self._request_message(shareId)
+        request_message = self._request_message(message_type, shareId)
         # Generate transaction record
         record = RequestRecord()
         record.id = request_message.token
@@ -284,7 +289,7 @@ class API(threading.Thread):
         # Send data
         device.send_message(request_message_bytes)
 
-    def request_share_sync(self, device_id: str, shareId: int, timeout_s: float = 1) -> bytes:
+    def request_message_sync(self, device_id: str, message_type: MessageType, shareId: int, timeout_s: float = 1) -> bytes:
         """Request a Share from the Comms device and wait for a response within the timeout.
 
         :param device_id: A Comms device id
@@ -300,7 +305,7 @@ class API(threading.Thread):
         if device == None:
             return bytes(0)
         # Request share from device
-        request_message_bytes = self._request_message(shareId).SerializeToString()
+        request_message_bytes = self._request_message(message_type, shareId).SerializeToString()
         response = transaction_pb2.TransactionMessage()
         try:
             response.ParseFromString(bytes(device.send_then_receive_message(request_message_bytes, timeout_s)[0:TRANSACTION_MESSAGE_SIZE]))
@@ -308,33 +313,7 @@ class API(threading.Thread):
             return bytes(0)
         return response.data[0:response.dataLength]
 
-    def request_common_sync(self, device_id: str, shareId: int, timeout_s: float = 1) -> bytes:
-        """Request a Common from the Comms device and wait for a response within the timeout.
-
-        :param device_id: A Comms device id
-        :type device_id: str
-        :param shareId: A share id
-        :type shareId: int
-        :param timeout_s: Waiting timeout in seconds
-        :type timeout_s: float 
-        :return: A response share
-        :rtype: bytes
-        """
-        device = self.get_device(device_id)
-        if device == None:
-            return bytes(0)
-        # Common share from device
-        common_message_bytes = self._common_message(shareId).SerializeToString()
-        response = transaction_pb2.TransactionMessage()
-        try:
-            data = device.send_then_receive_message(common_message_bytes, timeout_s)
-            response.ParseFromString(bytes(data[0:TRANSACTION_MESSAGE_SIZE]))
-        except BaseException as e:
-            logger.debug(f"Failed to parse respose {e}")
-            return bytes(0)
-        return response.data[0:response.dataLength]
-
-    def publish_share(self, device_id: str, shareId: int, data: bytes) -> None:
+    def publish_message(self, device_id: str, message_type: MessageType, shareId: int, data: bytes) -> None:
         """Publish a Share to the Comms device
 
         :param device_id: A Comms device id
@@ -349,7 +328,7 @@ class API(threading.Thread):
         if device == None:
             return
         # Generate publish message
-        publish_message = self._publish_message(shareId, data)
+        publish_message = self._publish_message(message_type, shareId, data)
         # Generate transaction record
         record = RequestRecord()
         record.id = publish_message.token
@@ -362,7 +341,7 @@ class API(threading.Thread):
         device.send_message(publish_message_bytes)
 
     # Private Request Message
-    def _request_message(self, shareId: int) -> transaction_pb2.TransactionMessage:
+    def _request_message(self, message_type: MessageType, shareId: int) -> transaction_pb2.TransactionMessage:
         """A Request Message
 
         :param shareId: A share id
@@ -372,13 +351,16 @@ class API(threading.Thread):
         """
         requestMessage = transaction_pb2.TransactionMessage()
         requestMessage.token = uuid4().int >> 96
-        requestMessage.action = transaction_pb2.TransactionMessage.REQUEST
+        if message_type == MessageType.COMMON:
+            requestMessage.action = transaction_pb2.TransactionMessage.COMMON_REQUEST
+        else:
+            requestMessage.action = transaction_pb2.TransactionMessage.SHARE_REQUEST
         requestMessage.shareId = shareId
         requestMessage.dataLength = 1
         requestMessage.data = bytes(DATA_MAX_SIZE)
         return requestMessage
 
-    def _publish_message(self, shareId: int, data: bytes) -> transaction_pb2.TransactionMessage:
+    def _publish_message(self, message_type: MessageType, shareId: int, data: bytes) -> transaction_pb2.TransactionMessage:
         """A Publish Message
 
         :param shareId: A share id
@@ -388,7 +370,10 @@ class API(threading.Thread):
         """
         publishMessage = transaction_pb2.TransactionMessage()
         publishMessage.token = uuid4().int >> 96
-        publishMessage.action = transaction_pb2.TransactionMessage.PUBLISH
+        if message_type == MessageType.COMMON:
+            publishMessage.action = transaction_pb2.TransactionMessage.COMMON_PUBLISH
+        else:
+            publishMessage.action = transaction_pb2.TransactionMessage.SHARE_PUBLISH
         publishMessage.shareId = shareId
         if data is None:
             data = bytes(0)
@@ -400,22 +385,6 @@ class API(threading.Thread):
         # print(publishMessage)
         # print(publishMessage.data.hex(" "))
         return publishMessage
-
-    def _common_message(self, shareId: int) -> transaction_pb2.TransactionMessage:
-        """A Common Message
-
-        :param shareId: A share id
-        :type shareId: int
-        :return: A transaction message
-        :rtype: transaction_pb2.TransactionMessage
-        """
-        commonMessage = transaction_pb2.TransactionMessage()
-        commonMessage.token = uuid4().int >> 96
-        commonMessage.action = transaction_pb2.TransactionMessage.COMMON
-        commonMessage.shareId = shareId
-        commonMessage.dataLength = 1
-        commonMessage.data = bytes(DATA_MAX_SIZE)
-        return commonMessage
 
     def get_shares(self, device_id:str, to_time: datetime, from_time: datetime, shareId: int) -> List[bytes]:
         """Get a range of shares from the database.

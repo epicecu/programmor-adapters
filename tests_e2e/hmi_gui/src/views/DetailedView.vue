@@ -25,13 +25,22 @@ export default {
     }
   },
   methods:{
-    requestMessage(shareId: number){
+    requestCommon(shareId: number){
+        if(this.device){
+            if(this.device.status === DeviceStatus.Disconencted || this.device.status === DeviceStatus.Failed){
+                return console.warn("Not connected to device "+this.device.deviceId);
+            }
+            this.storeHmi.requestCommon(this.device?.deviceId, shareId);
+            console.log("Requested Common "+shareId);
+        }
+    },
+    requestShare(shareId: number){
         if(this.device){
             if(this.device.status === DeviceStatus.Disconencted || this.device.status === DeviceStatus.Failed){
                 return console.warn("Not connected to device "+this.device.deviceId);
             }
             this.storeHmi.requestShare(this.device?.deviceId, shareId);
-            console.log("Requested share "+shareId);
+            console.log("Requested Share "+shareId);
         }
     }
   }
@@ -43,7 +52,7 @@ export default {
     <main v-if="selectedDevice">
         <h1 class="display-3">{{ device?.common1.deviceName }}</h1>
         <p class="lead">Detailed View</p>
-        
+
         <div v-if="device?.status === DeviceStatus.Connected">
             <table class="table table-bordered">
                 <thead>
@@ -79,12 +88,12 @@ export default {
                 </tr>
                 </tbody>
             </table>
-        
-            <button class="btn bg-white" @click="requestMessage(1)">Request Common1 Message</button>
+
+            <button class="btn bg-white" @click="requestCommon(1)">Request Common1 Message</button>
 
             <div class="mt-3">
                 <p>Total messages {{ messages.length }}</p>
-    
+
                 <div v-for="(message, i) in messages" :key="i">
                    ShareId {{ message["shareId"] }}, Message: {{ message["message"] }}
                 </div>

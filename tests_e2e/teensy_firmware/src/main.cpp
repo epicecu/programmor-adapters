@@ -38,13 +38,13 @@ corelib::HandleMessageState usingProto(corelib::Buffer* buffer)
     /**
      * Handle the Share requests & Common requests
      */
-    if(inMessage.action == TransactionMessage_Action_COMMON || inMessage.action == TransactionMessage_Action_REQUEST){
+    if(inMessage.action == TransactionMessage_Action_COMMON_REQUEST){
         // Response
         TransactionMessage outMessage = TransactionMessage_init_zero;
         pb_ostream_t outStream = pb_ostream_from_buffer(buffer->outBuffer, sizeof(buffer->outBuffer));
 
         outMessage.token = inMessage.token;
-        outMessage.action = TransactionMessage_Action_RESPONSE;
+        outMessage.action = TransactionMessage_Action_COMMON_RESPONSE;
 
         // Common message request
         if(inMessage.shareId == 1){
@@ -68,6 +68,30 @@ corelib::HandleMessageState usingProto(corelib::Buffer* buffer)
         }
         buffer->outMessageLength = outStream.bytes_written;
 
+    }else if(inMessage.action == TransactionMessage_Action_SHARE_REQUEST){
+        // Response
+        TransactionMessage outMessage = TransactionMessage_init_zero;
+        pb_ostream_t outStream = pb_ostream_from_buffer(buffer->outBuffer, sizeof(buffer->outBuffer));
+
+        outMessage.token = inMessage.token;
+        outMessage.action = TransactionMessage_Action_COMMON_RESPONSE;
+
+        // Common message request
+        if(inMessage.shareId == 1){
+            Share1 share1 = Share1_init_zero;
+
+            // copy share1 into the response message
+            pb_ostream_t share1Stream = pb_ostream_from_buffer(outMessage.data, Share1_size);
+            pb_encode(&share1Stream, Share1_fields, &share1);
+            outMessage.shareId = 1;
+            outMessage.dataLength = share1Stream.bytes_written;
+        }
+        
+        if(!pb_encode(&outStream, TransactionMessage_fields, &outMessage)){
+            // Failed to encode
+            return corelib::HandleMessageState::FAILED_ENCODE;
+        }
+        buffer->outMessageLength = outStream.bytes_written;
     }
 
     // Reset in buffer length

@@ -22,10 +22,12 @@ export enum DeviceStatus {
 
 export enum ActionType {
     NA = 0,
-    COMMON = 1,
-    REQUEST = 2,
-    PUBLISH = 3,
-    RESPONSE = 4,
+    COMMON_REQUEST = 1,
+    COMMON_PUBLISH = 2,
+    COMMON_RESPONSE = 3,
+    SHARE_REQUEST = 4,
+    SHARE_PUBLISH = 5,
+    SHARE_RESPONSE = 6
 }
 
 export interface AdapterInfo {
@@ -47,6 +49,7 @@ export interface DeviceInfo {
 }
 
 let Common1Message: protobuf.Type;
+let Share1Message: protobuf.Type;
 protobuf.load("src/proto/transaction.proto", (err, root) => {
     if(err){
         throw err;
@@ -55,8 +58,15 @@ protobuf.load("src/proto/transaction.proto", (err, root) => {
         throw "Protobuf unavailable";
     }
     Common1Message = root.lookupType("Common1");
-    // const test = Common1Message?.create();
-    // console.log(test)
+});
+protobuf.load("src/proto/test.proto", (err, root) => {
+    if(err){
+        throw err;
+    }
+    if(!root){
+        throw "Protobuf unavailable";
+    }
+    Share1Message = root.lookupType("Share1");
 });
 
 export const useHmiStore = defineStore('hmi', {
@@ -270,16 +280,26 @@ export const useHmiStore = defineStore('hmi', {
             SocketSerivce.getSocket().on("message_data", (transactionData) => {
                 console.log("On receive data: ", transactionData);
                 // Time to parse the data into a protobuf message
-                if(transactionData["actionType"] === ActionType.COMMON || transactionData["actionType"] === ActionType.RESPONSE){
+                if(transactionData["actionType"] === ActionType.COMMON_RESPONSE){
                     // Pase common message type
                     const base64: string = transactionData["data"]
                     // const data: ArrayBuffer = window.atob(base64);
                     const data = Uint8Array.from(window.atob(base64), (v) => v.charCodeAt(0));
                     console.log("data", data)
                     const message = Common1Message.decode(data);
-                    console.log("Parsed message ", message);
+                    console.log("Parsed common message ", message);
                     const store = useMessageStore()
-                    store.addMessage({"shareId": transactionData["shareId"], "message": message, "createdAt": Date.now()});
+                    store.addMessage({"messageType": "common", "shareId": transactionData["shareId"], "message": message, "createdAt": Date.now()});
+                }else if(transactionData["actionType"] === ActionType.SHARE_RESPONSE){
+                    // Pase share message type
+                    const base64: string = transactionData["data"]
+                    // const data: ArrayBuffer = window.atob(base64);
+                    const data = Uint8Array.from(window.atob(base64), (v) => v.charCodeAt(0));
+                    console.log("data", data)
+                    const message = Share1Message.decode(data);
+                    console.log("Parsed share message ", message);
+                    const store = useMessageStore()
+                    store.addMessage({"messageType": "share", "shareId": transactionData["shareId"], "message": message, "createdAt": Date.now()});
                 }
             });
         },
@@ -304,6 +324,9 @@ export const useHmiStore = defineStore('hmi', {
                 this.updateDevice(device);
             }
             SocketSerivce.getSocket().emit("disconnect_device", deviceId);
+        },
+        requestCommon(deviceId: string, shareId: number){
+            SocketSerivce.getSocket().emit("request_common", deviceId, shareId);
         },
         requestShare(deviceId: string, shareId: number){
             SocketSerivce.getSocket().emit("request_share", deviceId, shareId);

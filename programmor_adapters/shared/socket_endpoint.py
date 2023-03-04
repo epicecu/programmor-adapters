@@ -1,6 +1,6 @@
 from shared.endpoint import Endpoint
 from shared.api import API
-from shared.types import ResponseType
+from shared.types import MessageType, ResponseType
 from flask import Flask, copy_current_request_context
 from flask_socketio import SocketIO, Namespace, emit
 import base64
@@ -76,6 +76,54 @@ class SocketEndpoint(Endpoint):
             else:
                 emit('disconnected_failed', device_id)
 
+        def on_request_common(self, device_id: str, share_id: int):
+            """Request Common Message
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            :param share_id: Protobuf model share id
+            :type device_id: str
+            """
+            self.api.request_message(device_id, MessageType.COMMON, share_id)
+
+        def on_publish_common(self, device_id: str, share_id:int, data_urlfriendly: str):
+            """Publish Common Message
+            The data should be encoded using a base64 url friendly function
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            :param share_id: Protobuf model share id
+            :type device_id: int
+            :param data_urlfriendly: Protobuf share data encoded in base64 urlfriendly
+            :type data_urlfriendly: str
+            """
+            padding = 4 - (len(data_urlfriendly) % 4)
+            data_urlfriendly_mod = data_urlfriendly + ("=" * padding)
+            data = base64.urlsafe_b64decode(data_urlfriendly_mod)
+            self.api._publish_message(device_id, MessageType.COMMON, share_id, data)
+
+        def on_set_scheduled_common(self, device_id: str, share_id: int, interval: int):
+            """Set Scheduled Common Message
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            :param share_id: Protobuf model share id
+            :type device_id: int
+            :param interval: Scheduled interval to request share in milliseconds
+            :type interval: int
+            """
+            self.api.set_scheduled_message(device_id, MessageType.COMMON, share_id, interval)
+
+        def on_clear_scheduled_common(self, device_id: str, share_id: int):
+            """Clear Scheduled Common Message
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            :param share_id: Protobuf model share id
+            :type device_id: str
+            """
+            self.api.clear_scheduled_message(device_id, MessageType.COMMON, share_id)
+
         def on_request_share(self, device_id: str, share_id: int):
             """Request Share
 
@@ -84,7 +132,7 @@ class SocketEndpoint(Endpoint):
             :param share_id: Protobuf model share id
             :type device_id: str
             """
-            self.api.request_share(device_id, share_id)
+            self.api.request_message(device_id, MessageType.SHARE, share_id)
 
         def on_publish_share(self, device_id: str, share_id:int, data_urlfriendly: str):
             """Publish Share
@@ -100,10 +148,10 @@ class SocketEndpoint(Endpoint):
             padding = 4 - (len(data_urlfriendly) % 4)
             data_urlfriendly_mod = data_urlfriendly + ("=" * padding)
             data = base64.urlsafe_b64decode(data_urlfriendly_mod)
-            self.api.publish_share(device_id, share_id, data)
+            self.api._publish_message(device_id, MessageType.SHARE, share_id, data)
 
-        def on_set_scheduled_message(self, device_id: str, share_id: int, interval: int):
-            """Set Scheduled Message
+        def on_set_scheduled_share(self, device_id: str, share_id: int, interval: int):
+            """Set Scheduled Share Message
 
             :param device_id: A Programmor compatible device id
             :type device_id: str
@@ -112,17 +160,17 @@ class SocketEndpoint(Endpoint):
             :param interval: Scheduled interval to request share in milliseconds
             :type interval: int
             """
-            self.api.set_scheduled_message(device_id, share_id, interval)
+            self.api.set_scheduled_message(device_id, MessageType.SHARE, share_id, interval)
 
-        def on_clear_scheduled_message(self, device_id: str, share_id: int):
-            """Clear Scheduled Message
+        def on_clear_scheduled_share(self, device_id: str, share_id: int):
+            """Clear Scheduled Share Message
 
             :param device_id: A Programmor compatible device id
             :type device_id: str
             :param share_id: Protobuf model share id
             :type device_id: str
             """
-            self.api.clear_scheduled_message(device_id, share_id)
+            self.api.clear_scheduled_message(device_id, MessageType.SHARE, share_id)
 
     """SocketIO Endpoint; This is a singleton
     """

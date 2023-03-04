@@ -4,6 +4,8 @@
 #include <pb_decode.h>
 #include <pb_encode.h>
 #include "transaction.pb.h"
+#include "test.pb.h"
+
 
 corelib::USB usb;
 

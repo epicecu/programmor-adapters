@@ -61,4 +61,4 @@ tox:
 # help: proto				- compiles the protobug file (Only for testing purposes)
 .PHONY: proto
 proto:
-	@find src/programmor/proto -name '*.proto' -exec protoc --python_out=. src/programmor/proto/transaction.proto \;
+	@find programmor_adapters/shared/proto -name '*.proto' -exec protoc --python_out=. programmor_adapters/shared/proto/transaction.proto \;

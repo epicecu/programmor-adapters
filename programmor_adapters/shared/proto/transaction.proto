@@ -4,10 +4,12 @@ syntax = "proto3";
 message TransactionMessage {
     enum Action {
         NA = 0;
-        COMMON = 1;
-        REQUEST = 2;
-        PUBLISH = 3;
-        RESPONSE = 4;
+        COMMON_REQUEST = 1;
+        COMMON_PUBLISH = 2;
+        COMMON_RESPONSE = 3;
+        SHARE_REQUEST = 4;
+        SHARE_PUBLISH = 5;
+        SHARE_RESPONSE = 6;
     }
 
     fixed32 token = 1; // Unique token id, token will be identical to request for response
