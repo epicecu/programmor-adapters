@@ -164,6 +164,18 @@ class API(threading.Thread):
             self.scheduled.remove(schedule)
             logger.info(f"Removed schedule {shareId}")
 
+    def clear_all_schedules(self, device_id: str) -> None:
+        """Clear All Schedules
+        Clears all schedules for a given device.
+
+        :param device_id: A Comms device id
+        :type device_id: str
+        """
+        schedules = filter(lambda schedule: schedule.device_id == device_id, self.scheduled)
+        if schedules != None:
+            for schedule in schedules:
+                self.scheduled.remove(schedule)
+
     def get_devices(self) -> List[str]:
         """Returns a list of Programmor compatible device ids.
 
@@ -256,6 +268,9 @@ class API(threading.Thread):
             return
         # Close connection and delete
         try:
+            # Clear all schedules with this device
+            self.clear_all_schedules(device_id)
+            # Close
             self.connections[device_id].close()
             self.connections[device_id].stop()
             del self.connections[device_id]

@@ -9,6 +9,11 @@
 
 corelib::USB usb;
 
+int counterStart;
+int counterEnd;
+int counter;
+unsigned long elapsedTime;
+
 void setup();
 
 void loop();

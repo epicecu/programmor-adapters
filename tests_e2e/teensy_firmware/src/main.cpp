@@ -4,6 +4,12 @@
 
 void setup()
 {
+    // Counter defaults
+    counterStart = 0;
+    counterEnd = 100;
+    counter = counterStart;
+    elapsedTime = 0;
+
     // Init the usb comms
     usb.initilise();
     // Register callback function
@@ -15,6 +21,20 @@ void setup()
 
 void loop()
 {
+    // Process counter
+    unsigned long currentTime = millis();
+    // Each second
+    if(currentTime - elapsedTime > 1000){
+        counter++;
+        // Counter has reached the end
+        if(counter > counterEnd){
+            // Reset counter
+            counter = counterStart;
+        }
+        elapsedTime = currentTime;
+    }
+
+    // Process usb
     usb.iterate();
 }
 
@@ -74,11 +94,14 @@ corelib::HandleMessageState usingProto(corelib::Buffer* buffer)
         pb_ostream_t outStream = pb_ostream_from_buffer(buffer->outBuffer, sizeof(buffer->outBuffer));
 
         outMessage.token = inMessage.token;
-        outMessage.action = TransactionMessage_Action_COMMON_RESPONSE;
+        outMessage.action = TransactionMessage_Action_SHARE_RESPONSE;
 
         // Common message request
         if(inMessage.shareId == 1){
             Share1 share1 = Share1_init_zero;
+            share1.startingNumber = counterStart;
+            share1.endingNumber = counterEnd;
+            share1.counter = counter;
 
             // copy share1 into the response message
             pb_ostream_t share1Stream = pb_ostream_from_buffer(outMessage.data, Share1_size);
@@ -92,6 +115,23 @@ corelib::HandleMessageState usingProto(corelib::Buffer* buffer)
             return corelib::HandleMessageState::FAILED_ENCODE;
         }
         buffer->outMessageLength = outStream.bytes_written;
+
+    }else if(inMessage.action == TransactionMessage_Action_COMMON_PUBLISH){
+        // Do nothing
+
+    }else if(inMessage.action == TransactionMessage_Action_SHARE_PUBLISH){
+        // Common message request
+        if(inMessage.shareId == 1){
+            Share1 share1 = Share1_init_zero;
+            pb_istream_t share1Stream = pb_istream_from_buffer(inMessage.data, inMessage.dataLength);
+            if(!pb_decode(&share1Stream, Share1_fields, &share1)){
+                buffer->inIndex = 0;
+                return corelib::HandleMessageState::FAILED_DECODE;
+            }
+            // Update counter params
+            counterEnd = share1.endingNumber;
+            counterStart = share1.startingNumber;
+        }
     }
 
     // Reset in buffer length

@@ -20,14 +20,14 @@
     <span class="nav-link text-light">Help</span>
 </li>
 </actionbar-component>
-<div class="row no-margin no-padding flex-grow-1 bg-light">
-    <div class="col-2 border-end no-padding">
+<div class="row m-0 p-0 h-100 flex-grow-1 bg-light">
+    <div class="col-2 border-end p-0">
         <AdapterView />
     </div>
-    <div class="col-2 border-end no-padding">
+    <div class="col-2 border-end p-0">
         <DeviceView />
     </div>
-    <div class="col-8 no-padding">
+    <div class="col-8 p-0 h-100">
         <DetailedView />
     </div>
 </div>

@@ -2,7 +2,7 @@
 </script>
 
 <template>
-  <div class="app-inner container-fluid min-100 d-flex flex-column">
+  <div class="app-inner container-fluid min-100 vh-100 d-flex flex-column overflow-hidden">
     <nav class="navbar navbar-expand bg-white flex-shrink-0 app-header">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">

@@ -3,6 +3,7 @@ import { DeviceStatus, useHmiStore } from '@/stores/hmi'
 import { useMessageStore } from '@/stores/message';
 import { storeToRefs } from 'pinia';
 import type { DeviceInfo } from '@/stores/hmi';
+import type { MessageInfo } from '@/stores/message';
 
 export default {
   setup(){
@@ -19,9 +20,24 @@ export default {
         messages
     }
   },
+  data(){
+    return {
+        counterStart: 0 as number,
+        counterEnd: 50 as number
+    }
+  },
   computed:{
     device(){
         return this.storeHmi.getDevice(this.selectedDevice);
+    },
+    share1(){
+        return this.storeMessage.getShare(1);
+    },
+  },
+  watch:{
+    share1: function(share: MessageInfo){
+        this.counterStart = share.message["startingNumber"];
+        this.counterEnd = share.message["endingNumber"];
     }
   },
   methods:{
@@ -60,12 +76,40 @@ export default {
             this.storeHmi.clearCommonSchedule(this.device?.deviceId, shareId);
             console.log("Clear Schedule Common "+shareId);
         }
+    },
+    setShareSchedule(shareId: number, interval: number){
+        if(this.device){
+            if(this.device.status === DeviceStatus.Disconencted || this.device.status === DeviceStatus.Failed){
+                return console.warn("Not connected to device "+this.device.deviceId);
+            }
+            this.storeHmi.setShareSchedule(this.device?.deviceId, shareId, interval);
+            console.log("Set Schedule Share "+shareId+" Interval "+interval);
+        }
+    },
+    clearShareSchedule(shareId: number){
+        if(this.device){
+            if(this.device.status === DeviceStatus.Disconencted || this.device.status === DeviceStatus.Failed){
+                return console.warn("Not connected to device "+this.device.deviceId);
+            }
+            this.storeHmi.clearShareSchedule(this.device?.deviceId, shareId);
+            console.log("Clear Schedule Share "+shareId);
+        }
+    },
+    publishCounterParams(){
+        if(this.device){
+            if(this.device.status === DeviceStatus.Disconencted || this.device.status === DeviceStatus.Failed){
+                return console.warn("Not connected to device "+this.device.deviceId);
+            }
+            this.storeHmi.publishShare(this.device?.deviceId, 1, this.counterStart, this.counterEnd);
+        }
+        console.log("Pub")
     }
   }
 };
 </script>
 
 <template>
+    <div class="detailed-view overflow-auto">
     <div class="container">
     <main v-if="selectedDevice">
         <h1 class="display-3">{{ device?.common1.deviceName }}</h1>
@@ -107,23 +151,79 @@ export default {
                 </tbody>
             </table>
 
-            <button class="btn bg-white" @click="requestCommon(1)">Request Common1 Message</button>
+            <div class="mt-4">
+                <div class="row">
+                    <div class="col">
+                        <button class="btn bg-white" @click="requestCommon(1)">Request Common1 Message</button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-white" @click="setCommonSchedule(1, 2000)">Set Commmon1 Schedule 2s</button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-white" @click="clearCommonSchedule(1)">Clear Commmon1 Schedule 2s</button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-white" @click="requestShare(1)">Request Share1 Message</button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-white" @click="setShareSchedule(1, 2000)">Set Share1 Schedule 2s</button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-white" @click="clearShareSchedule(1)">Clear Share1 Schedule 2s</button>
+                    </div>
+                </div>
+            </div>
 
-            <button class="btn bg-white" @click="setCommonSchedule(1, 2000)">Set Commmon1 Schedule 2000ms</button>
+            <div class="mt-4">
+                <div class="row">
+                    <p>Publish Share1 to the device<br>Inputs value's will automatically update when a Share1 message is received</p>
+                    <p>Counter: {{ share1?.message["counter"] }}</p>
+                    <div class="col-3">
+                        <div class="mb-3">
+                            <label for="counterStartingValue" class="form-label">Counter Starting Value</label>
+                            <input type="number" class="form-control" id="counterStartingValue" placeholder="0" v-model="counterStart">
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="mb-3">
+                            <label for="counterStartingValue" class="form-label">Counter Ending Value</label>
+                            <input type="number" class="form-control" id="counterStartingValue" placeholder="0" v-model="counterEnd">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-2">
+                        <button class="btn bg-white" @click="publishCounterParams">Publish</button>
+                    </div>
+                </div>
+            </div>
 
-            <button class="btn bg-white" @click="clearCommonSchedule(1)">Clear Commmon1 Schedule 2000ms</button>
-
-            <div class="mt-3">
+            <div class="mt-4">
                 <p>Total messages {{ messages.length }}</p>
 
                 <div v-for="(message, i) in messages" :key="i">
                    ShareId {{ message["shareId"] }}, Message: {{ message["message"] }}
                 </div>
             </div>
+
         </div>
         <p v-if="device?.status === DeviceStatus.Connecting">Connecting</p>
         <p v-if="device?.status === DeviceStatus.Disconnecting">Disconnecting</p>
         <p v-if="device?.status === DeviceStatus.Failed">Failed</p>
     </main>
     </div>
+    </div>
 </template>
+
+<style scoped>
+  .detailed-view{
+    max-height: calc(100vh - 56px - 81px); 
+  }
+  .h-0{
+    height: 0;
+  }
+  .footer{
+    height: 200px;
+  }
+  
+</style>

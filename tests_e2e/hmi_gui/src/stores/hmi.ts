@@ -2,7 +2,8 @@ import { defineStore, storeToRefs } from 'pinia'
 import SocketSerivce from '@/socket/socket'
 import { compile } from 'vue'
 import protobuf from 'protobufjs';
-import { useMessageStore } from './message'; 
+import { useMessageStore, MessageType } from '@/stores/message';
+import type { MessageInfo } from '@/stores/message';
 
 export enum AdapterStatus {
     Failed = -2,
@@ -285,21 +286,33 @@ export const useHmiStore = defineStore('hmi', {
                     const base64: string = transactionData["data"]
                     // const data: ArrayBuffer = window.atob(base64);
                     const data = Uint8Array.from(window.atob(base64), (v) => v.charCodeAt(0));
-                    console.log("data", data)
                     const message = Common1Message.decode(data);
                     console.log("Parsed common message ", message);
                     const store = useMessageStore()
-                    store.addMessage({"messageType": "common", "shareId": transactionData["shareId"], "message": message, "createdAt": Date.now()});
+                    let messageInfo = {} as MessageInfo;
+                    messageInfo.type = MessageType.COMMON;
+                    messageInfo.shareId = transactionData["shareId"];
+                    messageInfo.message = message;
+                    messageInfo.createdAt = Date.now();
+                    store.addMessage(messageInfo);
+
                 }else if(transactionData["actionType"] === ActionType.SHARE_RESPONSE){
                     // Pase share message type
                     const base64: string = transactionData["data"]
                     // const data: ArrayBuffer = window.atob(base64);
                     const data = Uint8Array.from(window.atob(base64), (v) => v.charCodeAt(0));
-                    console.log("data", data)
                     const message = Share1Message.decode(data);
-                    console.log("Parsed share message ", message);
+                    const messageWDefaults = Share1Message.toObject(message, {
+                        defaults: true
+                    })
+                    console.log("Parsed share message ", messageWDefaults);
                     const store = useMessageStore()
-                    store.addMessage({"messageType": "share", "shareId": transactionData["shareId"], "message": message, "createdAt": Date.now()});
+                    let messageInfo = {} as MessageInfo;
+                    messageInfo.type = MessageType.SHARE;
+                    messageInfo.shareId = transactionData["shareId"];
+                    messageInfo.message = messageWDefaults;
+                    messageInfo.createdAt = Date.now();
+                    store.addMessage(messageInfo);
                 }
             });
         },
@@ -339,6 +352,21 @@ export const useHmiStore = defineStore('hmi', {
         },
         clearCommonSchedule(deviceId: string, shareId: number){
             SocketSerivce.getSocket().emit("clear_scheduled_common", deviceId, shareId);
+        },
+        setShareSchedule(deviceId: string, shareId: number, interval: number){
+            SocketSerivce.getSocket().emit("set_scheduled_share", deviceId, shareId, interval);
+        },
+        clearShareSchedule(deviceId: string, shareId: number){
+            SocketSerivce.getSocket().emit("clear_scheduled_share", deviceId, shareId);
+        },
+        publishShare(deviceId: string, shareId: number, counterStart: number, counterEnd: number){
+            const payload = {
+                startingNumber: counterStart,
+                endingNumber: counterEnd,
+                counter: 0
+            }
+            const message = Share1Message.create(payload);
+            console.log(message);
         },
         // Others
         updateSelectedDevice(deviceId: string){
