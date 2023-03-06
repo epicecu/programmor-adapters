@@ -6,6 +6,8 @@ import base64
 
 # Logging
 import logging
+
+from shared.types import MessageType
 logger = logging.getLogger(__name__)
 
 
@@ -76,7 +78,7 @@ class RestEndpoint(Endpoint):
             :param share_id: Protobuf model share id
             :type device_id: str
             """
-            data = self.api.request_share_async(device_id, share_id, 1)
+            data = self.api.request_message_sync(device_id, MessageType.SHARE, share_id, 1)
             encoded = base64.urlsafe_b64encode(data)
             data_urlfriendly = encoded.rstrip("=")
             return jsonify({'data': data_urlfriendly})
@@ -97,7 +99,7 @@ class RestEndpoint(Endpoint):
             padding = 4 - (len(data_urlfriendly) % 4)
             data_urlfriendly_mod = data_urlfriendly + ("=" * padding)
             data = base64.urlsafe_b64decode(data_urlfriendly_mod)
-            return jsonify({'None': self.api.publish_share(device_id, share_id, data)})
+            return jsonify({'None': self.api.publish_message(device_id, MessageType.SHARE, share_id, data)})
 
         def set_scheduled_message(self, device_id: str, share_id: int, interval: int):
             """Set Scheduled Message

@@ -1,7 +1,7 @@
 from shared.endpoint import Endpoint
 from shared.api import API
 from shared.types import MessageType, ResponseType
-from flask import Flask, copy_current_request_context
+from flask import Flask
 from flask_socketio import SocketIO, Namespace, emit
 import base64
 
@@ -97,10 +97,8 @@ class SocketEndpoint(Endpoint):
             :param data_urlfriendly: Protobuf share data encoded in base64 urlfriendly
             :type data_urlfriendly: str
             """
-            padding = 4 - (len(data_urlfriendly) % 4)
-            data_urlfriendly_mod = data_urlfriendly + ("=" * padding)
-            data = base64.urlsafe_b64decode(data_urlfriendly_mod)
-            self.api._publish_message(device_id, MessageType.COMMON, share_id, data)
+            data = base64.urlsafe_b64decode(data_urlfriendly)
+            self.api.publish_message(device_id, MessageType.COMMON, share_id, data)
 
         def on_set_scheduled_common(self, device_id: str, share_id: int, interval: int):
             """Set Scheduled Common Message
@@ -145,10 +143,8 @@ class SocketEndpoint(Endpoint):
             :param data_urlfriendly: Protobuf share data encoded in base64 urlfriendly
             :type data_urlfriendly: str
             """
-            padding = 4 - (len(data_urlfriendly) % 4)
-            data_urlfriendly_mod = data_urlfriendly + ("=" * padding)
-            data = base64.urlsafe_b64decode(data_urlfriendly_mod)
-            self.api._publish_message(device_id, MessageType.SHARE, share_id, data)
+            data = base64.b64decode(data_urlfriendly)
+            self.api.publish_message(device_id, MessageType.SHARE, share_id, data)
 
         def on_set_scheduled_share(self, device_id: str, share_id: int, interval: int):
             """Set Scheduled Share Message

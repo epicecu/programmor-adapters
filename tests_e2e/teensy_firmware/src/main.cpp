@@ -96,7 +96,7 @@ corelib::HandleMessageState usingProto(corelib::Buffer* buffer)
         outMessage.token = inMessage.token;
         outMessage.action = TransactionMessage_Action_SHARE_RESPONSE;
 
-        // Common message request
+        // Share message request
         if(inMessage.shareId == 1){
             Share1 share1 = Share1_init_zero;
             share1.startingNumber = counterStart;
@@ -120,7 +120,7 @@ corelib::HandleMessageState usingProto(corelib::Buffer* buffer)
         // Do nothing
 
     }else if(inMessage.action == TransactionMessage_Action_SHARE_PUBLISH){
-        // Common message request
+        // Share message publish
         if(inMessage.shareId == 1){
             Share1 share1 = Share1_init_zero;
             pb_istream_t share1Stream = pb_istream_from_buffer(inMessage.data, inMessage.dataLength);

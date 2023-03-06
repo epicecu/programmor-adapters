@@ -22,7 +22,7 @@ export const useMessageStore = defineStore('message', {
         getShare: (state) => {
             // Returns all the adapters
             return (shareId: number) => {
-                const shares =  state.messages.filter((message) => message.shareId === shareId);
+                const shares =  state.messages.filter((message) => message.shareId === shareId  && message.type === MessageType.SHARE);
                 let foundShare = shares[0];
                 if(shares){
                     shares.forEach(share => {

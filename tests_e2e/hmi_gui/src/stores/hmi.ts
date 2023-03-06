@@ -284,7 +284,6 @@ export const useHmiStore = defineStore('hmi', {
                 if(transactionData["actionType"] === ActionType.COMMON_RESPONSE){
                     // Pase common message type
                     const base64: string = transactionData["data"]
-                    // const data: ArrayBuffer = window.atob(base64);
                     const data = Uint8Array.from(window.atob(base64), (v) => v.charCodeAt(0));
                     const message = Common1Message.decode(data);
                     console.log("Parsed common message ", message);
@@ -299,7 +298,6 @@ export const useHmiStore = defineStore('hmi', {
                 }else if(transactionData["actionType"] === ActionType.SHARE_RESPONSE){
                     // Pase share message type
                     const base64: string = transactionData["data"]
-                    // const data: ArrayBuffer = window.atob(base64);
                     const data = Uint8Array.from(window.atob(base64), (v) => v.charCodeAt(0));
                     const message = Share1Message.decode(data);
                     const messageWDefaults = Share1Message.toObject(message, {
@@ -366,7 +364,10 @@ export const useHmiStore = defineStore('hmi', {
                 counter: 0
             }
             const message = Share1Message.create(payload);
-            console.log(message);
+            const data = Share1Message.encode(message).finish();
+            var decoder = new TextDecoder('utf8');
+            const base64 = window.btoa(decoder.decode(data));
+            SocketSerivce.getSocket().emit("publish_share", deviceId, shareId, base64);
         },
         // Others
         updateSelectedDevice(deviceId: string){

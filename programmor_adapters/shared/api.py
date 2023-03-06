@@ -3,7 +3,7 @@ from shared.datetime import diff_ms
 from shared.types import MessageType, ResponseType
 from datetime import datetime
 from time import sleep
-from typing import List, Dict, Protocol, Callable
+from typing import List, Dict, Callable
 from uuid import uuid4
 from tinydb import TinyDB, Query
 import threading
@@ -51,12 +51,14 @@ class RequestRecord():
     """
     id: int
     device_id: str
-    sent_at: datetime
-    received_at: datetime
+    sent_at: datetime = datetime.now()
+    received_at: datetime = None
     created_at: datetime = datetime.now()
     def __str__(self) -> str:
-        return f"RequestRecord(id: {self.id} device_id: {self.device_id} sent_at: {self.sent_at} received_at: {self.received_at} created_at: {self.created_at} duration: {self.received_at - self.sent_at})"
-
+        if self.received_at != None:
+            return f"RequestRecord(id: {self.id} device_id: {self.device_id} sent_at: {self.sent_at} received_at: {self.received_at} created_at: {self.created_at} duration: {self.received_at - self.sent_at})"
+        else:
+            return f"RequestRecord(id: {self.id} device_id: {self.device_id} sent_at: {self.sent_at} created_at: {self.created_at})"
 
 class API(threading.Thread):
 
@@ -358,6 +360,7 @@ class API(threading.Thread):
         record.device_id = device_id
         record.sent_at = datetime.now()
         self.transactions.append(record)
+        logger.info(record)
         # Convert message to bytes
         publish_message_bytes = publish_message.SerializeToString()
         # Send data
@@ -453,7 +456,7 @@ class API(threading.Thread):
         logger.info(metadata)
         self.transactions.remove(metadata)
         # Save data to database
-        self.db.insert({"id": metadata.id, "device": device_id, "action": response.action, "shareId": response.shareId ,"data": str(base64.b64encode(response.data)), "requestedAt": str(metadata.sent_at), "receivedAt": str(metadata.received_at)})
+        # self.db.insert({"id": metadata.id, "device": device_id, "action": response.action, "shareId": response.shareId ,"data": str(base64.b64encode(response.data)), "requestedAt": str(metadata.sent_at), "receivedAt": str(metadata.received_at)})
         # Pass data to callback functions
         responseData:bytes = response.data[0:response.dataLength]
         responseJson: ResponseType = dict()
