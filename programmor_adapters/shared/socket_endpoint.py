@@ -25,6 +25,7 @@ class SocketEndpoint(Endpoint):
 
         """Socket Namespace
         """
+
         def on_connect(self):
             """Client Connects
             """
@@ -86,7 +87,7 @@ class SocketEndpoint(Endpoint):
             """
             self.api.request_message(device_id, MessageType.COMMON, share_id)
 
-        def on_publish_common(self, device_id: str, share_id:int, data_urlfriendly: str):
+        def on_publish_common(self, device_id: str, share_id: int, data_urlfriendly: str):
             """Publish Common Message
             The data should be encoded using a base64 url friendly function
 
@@ -132,7 +133,7 @@ class SocketEndpoint(Endpoint):
             """
             self.api.request_message(device_id, MessageType.SHARE, share_id)
 
-        def on_publish_share(self, device_id: str, share_id:int, data_urlfriendly: str):
+        def on_publish_share(self, device_id: str, share_id: int, data_urlfriendly: str):
             """Publish Share
             The data should be encoded using a base64 url friendly function
 
@@ -170,6 +171,7 @@ class SocketEndpoint(Endpoint):
 
     """SocketIO Endpoint; This is a singleton
     """
+
     def __init__(self, app: Flask, api: API) -> None:
         super().__init__(app, api)
         self.socket: SocketIO = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")

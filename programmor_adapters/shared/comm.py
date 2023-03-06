@@ -1,8 +1,7 @@
 import threading
 import random
-import asyncio
 from math import ceil
-from typing import Callable, Dict, List, Protocol
+from typing import Callable, Dict, List
 from queue import Queue
 from time import sleep, perf_counter
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 # Comm base class.
 class Comm(threading.Thread):
     """Communication Interface
-    To be extended to support Programmor communication methods, self contained class using 
+    To be extended to support Programmor communication methods, self contained class using
     python threading. Supports packetising data into Frames to receive & send to the device.
     """
 
@@ -195,7 +194,7 @@ class Comm(threading.Thread):
         :param message_bytes: Data to send to the device
         :type message_bytes: bytes
         :param wait_s: Waiting timeout in seconds
-        :type wait_s: float 
+        :type wait_s: float
         :return: Response from the device
         :rtype: bytes
         """
@@ -204,7 +203,7 @@ class Comm(threading.Thread):
         startTime = perf_counter()
         currentTime = perf_counter()
         while ((currentTime - startTime) < wait_s):
-            #asyncio.sleep(0.001)
+            # asyncio.sleep(0.001)
             currentTime = perf_counter()
             sleep(0.001)
             if self.lastMessage != oldMessage:
@@ -222,7 +221,7 @@ class Comm(threading.Thread):
         # instead of a list, simply create the frames and write
 
     def set_received_message_callback(self, fn: Callable[[bytes], None]) -> None:
-        """Set the callback function to be called when a new message 
+        """Set the callback function to be called when a new message
         has been received.
 
         :param message_bytes: Callback function

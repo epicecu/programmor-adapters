@@ -1,18 +1,19 @@
 import logging
 import hashlib
 from time import sleep
-from typing import List, Any, Dict
+from typing import List, Dict
 
 from shared.comm import Comm, Frame
 
 try:  # noqa: E722
-    import hid # Linux
+    import hid  # Linux
 except Exception as e:
     print("Failled to import HID library, install required binaries for your system")
     print(e)
 
 try:  # noqa: E722
-    import pywinusb.hid as hid # Windows
+    import pywinusb.hid as hid  # Windows # noqa: F811
+
     def enumerate() -> any:
         device_strings: List[str] = list()
         devices = hid.HidDeviceFilter().get_devices()
@@ -98,15 +99,15 @@ class USB(Comm):
             return False
         # Check
         if not response.is_valid():
-            logger.debug(f"Frame CRC not valid")
+            logger.debug("Frame CRC not valid")
             return False
         if response.preamble != 0x03:
-            logger.debug(f"Frame type incorrect")
+            logger.debug("Frame type incorrect")
             return False
         self.blocking = False
         return True
 
-    def get_devices(self) -> List[str]:       
+    def get_devices(self) -> List[str]:
         return self.get_device_ids()
 
     def read(self) -> bytes:

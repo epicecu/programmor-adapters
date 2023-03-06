@@ -1,6 +1,6 @@
 from time import sleep
 
-from programmor_adapters.shared.interface import Comm, Frame, FRAME_PAYLOAD_SIZE, ProcessState
+from programmor_adapters.shared.comm import Comm, Frame, FRAME_PAYLOAD_SIZE, ProcessState
 
 
 # Fake comms interface
@@ -72,7 +72,7 @@ def test_comms_read_single_frame():
         assert message == bytes([x for x in range(FRAME_PAYLOAD_SIZE)])
 
     com = Connection()
-    com.received_message_callback(on_received_message)
+    com.set_received_message_callback(on_received_message)
     # Test data
     in_data = generate_frame()
     com.incoming_buffer = in_data.to_bytes()
@@ -89,7 +89,7 @@ def test_comms_read_multiple_frames():
         assert message == bytes([x for x in range(0, FRAME_PAYLOAD_SIZE*3)])
 
     com = Connection()
-    com.received_message_callback(on_received_message)
+    com.set_received_message_callback(on_received_message)
     # Test data frame 1 of 3
     in_data = generate_frame(0, FRAME_PAYLOAD_SIZE)
     in_data.frameTotal = 3
@@ -125,7 +125,7 @@ def test_comms_read_multiple_frames_out_of_order():
         assert message == bytes([x for x in range(0, FRAME_PAYLOAD_SIZE*3)])
 
     com = Connection()
-    com.received_message_callback(on_received_message)
+    com.set_received_message_callback(on_received_message)
     # Test data frame 2 of 3
     in_data = generate_frame(FRAME_PAYLOAD_SIZE, FRAME_PAYLOAD_SIZE*2)
     in_data.frameTotal = 3
@@ -177,7 +177,7 @@ def test_comms_threading():
         assert message == bytes([x for x in range(FRAME_PAYLOAD_SIZE)])
 
     com = Connection()
-    com.received_message_callback(on_received_message)
+    com.set_received_message_callback(on_received_message)
     com.start()
 
     # Test data

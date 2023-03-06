@@ -9,7 +9,7 @@
 [![Tests](https://github.com/epicecu/programmor/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/epicecu/programmor/actions/workflows/tests.yml)
 
 ## Notes
- - The Gevent webserver is prefered over the eventlet server due to the server emit function failing to work and causing the server to restart, generating a new session id.  
+- The Gevent webserver is prefered over the eventlet server due to the server emit function failing to work and causing the server to restart, generating a new session id.  
 
 ## Install
 
@@ -42,44 +42,13 @@ Set the `PROGRAMMOR_PROTO_FILE` environment variable to override the default beh
 with hardware development. This may be useful when the hardware repo may not be public yet and can not
 access the proto file via http get.
 
-Linux/Mac
-
 ```bash
 make run
 ```
-
-Windows
-
-```bash
-venv\Scripts\activate
-python src/programmor
-```
-
-Qt Designer on Windows: designer.exe
-
 ## Compiling the Protobuf files
 
 ```bash
 make compile-proto
-```
-
-Windows
-```bash
-protoc.exe --python_out=. src/programmor/proto/transaction.proto
-```
-
-## Styles
-
-Check the code style by running flake8
-
-```bash
-make check-style
-```
-
-Check and apply style alternation to the source files. Update the last line option to select a file to process
-
-```bash
-make style
 ```
 
 ## Run tests
@@ -91,14 +60,6 @@ make test
 Note: Your system will need to have the 3.10 python environment installed
 ```bash
 make tox
-```
-
-## Type Checking
-
-Type checking is currently disable in the tox test pipeline
-
-```bash
-make check-type
 ```
 
 ## Packaging for Production
@@ -123,7 +84,7 @@ View the docs in the browser by running `python3 -m http.server -d build/html`
 **Donations will ensure the following:**
 
 - 🔨 Long term maintenance of the project
-- 🛣 Progress on the [roadmap](https://epicecu.com/programmor/docs/roadmap)
+- 🛣 Progress on the [roadmap](https://epicecu.com/programmor/roadmap)
 - 🐛 Quick responses to bug reports and help requests
 
 ## Maintainers
@@ -134,11 +95,9 @@ View the docs in the browser by running `python3 -m http.server -d build/html`
 
 GPL V2 © [Programmor](https://github.com/epicecu/programmor)
 
-## Tasks to do
+## Todo
 
-- Properlly close the session when exit is clicked for session, this includes closing the serial connection.
-- Fix "defaultPin" for connection being send and over ridding user selected configuration. Actually, the default should be set on the device, the gui should just display currect values and allow to update.
-    - This has now been fixed
-- Fix the receive handler to better support messages spread over multiple data packets. Currently updated so system fits all data in single frame, this works for now but does not guarantee working order on other pc's, setups. 
-    - This has now been fixed
-- The hardware seems to lock up on 8/9 x refreshes on the main page. I have traced it down to opening and closing the usb connection too many times, needs more investigation.
+1. When messages are received from the device, the emit and receive on the HMI side takes too long to complete
+2. Test with multiple USB devices connected
+3. Test on Windows 10, 11
+4. Test on Mac

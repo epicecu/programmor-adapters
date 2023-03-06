@@ -36,17 +36,17 @@ install-dev: install
 # help: style					- fixes the project style
 .PHONY: style
 style:
-	@find src -path "*proto*" -prune -o -path "*include*" -prune -o -type f -name '*.py' -exec autopep8 --in-place '{}' \;
+	@find programmor_adapters -path "*proto*" -prune -o -path "*include*" -prune -o -type f -name '*.py' -exec autopep8 --in-place '{}' \;
 
 # help: check-style				- checks the project style
 .PHONY: check-style
 check-style:
-	@flake8 src tests
+	@flake8 programmor_adapters tests
 
 # help: check-type				- checks the projects types
 .PHONY: check-type
 check-type:
-	@mypy src
+	@mypy programmor_adapters
 
 # help: test					- runs app tests
 .PHONY: test

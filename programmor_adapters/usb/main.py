@@ -2,7 +2,6 @@ import sys
 import logging
 import argparse
 import os
-import asyncio
 from flask import Flask
 
 from shared.api import API
@@ -40,7 +39,7 @@ def main():
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     format = logging.Formatter("%(asctime)s [%(name)s] [%(threadName)s] [%(levelname)-5.5s] %(message)s")
-    
+
     # File stream
     path = os.path.expanduser(os.path.dirname(args.log_file))
     os.makedirs(path, mode=0o775, exist_ok=True)
@@ -62,11 +61,11 @@ def main():
     # Start Application
 
     logger.info("Programmor USB Adaptation")
- 
+
     # Application to go here
     # sys.exit(app.exec())
 
-    # Programmor Adapter API function 
+    # Programmor Adapter API function
     api = API(USB)
     api.start()
 
@@ -87,7 +86,7 @@ def main():
     # except:
     #     print("TEst failed")
 
-    # Starts the Socket-Flask, and Flask app 
+    # Starts the Socket-Flask, and Flask app
     socket.start()
 
     # Stopping Adapter
@@ -95,9 +94,11 @@ def main():
     try:
         socket.stop()
         rest.stop()
-    except:
-        logger.debug("Failed to stop Socket or Rest apps")
+    except Exception as e:
+        logger.error("Failed to stop Socket or Rest apps")
+        logger.error(e)
     api.stop()
+
 
 if __name__ == "__main__":
     main()

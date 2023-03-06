@@ -19,14 +19,14 @@ class RestEndpoint(Endpoint):
     """
 
     class ApiView(FlaskView):
-        
+
         """ API Reference
         """
         api: API
-        
+
         def index(self):
             """Index
-            
+
             GET: /api/
             """
             return jsonify({'Programmor-Adapter': 'USB'})
@@ -40,7 +40,7 @@ class RestEndpoint(Endpoint):
 
         def check_status(self, device_id: str):
             """Check Status
-            
+
             GET: /api/check_status
 
             :param device_id: A Programmor compatible device id
@@ -83,7 +83,7 @@ class RestEndpoint(Endpoint):
             data_urlfriendly = encoded.rstrip("=")
             return jsonify({'data': data_urlfriendly})
 
-        def publish_share(self, device_id: str, share_id:int, data_urlfriendly: str):
+        def publish_share(self, device_id: str, share_id: int, data_urlfriendly: str):
             """Publish Share
             The data should be encoded using a base64 url friendly function
 
@@ -126,7 +126,6 @@ class RestEndpoint(Endpoint):
             :type device_id: str
             """
             return jsonify({'None': self.api.clear_scheduled_message(device_id, share_id)})
-
 
     def __init__(self, app: Flask, api: API) -> None:
         """REST Endpoint

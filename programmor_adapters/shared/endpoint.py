@@ -5,7 +5,8 @@ from flask import Flask
 class Endpoint():
     """Endpoint Interface
     """
-    def __init__(self, app: Flask, api:API) -> None:
+
+    def __init__(self, app: Flask, api: API) -> None:
         self.app = app
         self.api = api
 

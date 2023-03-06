@@ -23,9 +23,10 @@ TRANSACTION_MESSAGE_SIZE = 99
 
 """Developer Notes:
 Tiny DB Reference - https://tinydb.readthedocs.io/en/latest/getting-started.html
-Writing docs - https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html 
+Writing docs - https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html
 
 """
+
 
 class ScheduledRequest():
     """Scheduled Request Message Object
@@ -37,11 +38,14 @@ class ScheduledRequest():
     last_scheduled: datetime = datetime.now()
     updated_at: datetime
     created_at: datetime = datetime.now()
+
     def tick(self):
         self.last_scheduled = datetime.now()
+
     def update_interval(self, interval_ms: int):
         self.interval_ms = interval_ms
         self.updated_at = datetime.now()
+
     def __str__(self) -> str:
         return f"ScheduledRequest(device_id: {self.device_id} message_type: {self.message_type} share_id: {self.share_id} interval: {self.interval_ms})"
 
@@ -54,11 +58,14 @@ class RequestRecord():
     sent_at: datetime = datetime.now()
     received_at: datetime = None
     created_at: datetime = datetime.now()
+
     def __str__(self) -> str:
-        if self.received_at != None:
-            return f"RequestRecord(id: {self.id} device_id: {self.device_id} sent_at: {self.sent_at} received_at: {self.received_at} created_at: {self.created_at} duration: {self.received_at - self.sent_at})"
+        if self.received_at is not None:
+            return f"""RequestRecord(id: {self.id} device_id: {self.device_id} sent_at: {self.sent_at}
+            received_at: {self.received_at} created_at: {self.created_at} duration: {self.received_at - self.sent_at})"""
         else:
             return f"RequestRecord(id: {self.id} device_id: {self.device_id} sent_at: {self.sent_at} created_at: {self.created_at})"
+
 
 class API(threading.Thread):
 
@@ -74,7 +81,7 @@ class API(threading.Thread):
         # Thread
         threading.Thread.__init__(self)
         self.stop_flag: bool = False
-        # Process scheduled messages loop 
+        # Process scheduled messages loop
         self.scheduled: List[ScheduledRequest] = list()
         # API
         self.connections: Dict[str, Comm] = dict()
@@ -117,7 +124,7 @@ class API(threading.Thread):
 
     def _process_scheduled_messages(self) -> None:
         """Process Scheduled Messages
-        Loop through the schedules and determin if the process time 
+        Loop through the schedules and determin if the process time
         has elapsed the interval time.
         """
         for schedule in self.scheduled:
@@ -137,9 +144,10 @@ class API(threading.Thread):
         :type device_id: float
         """
         # Check if schedule already exists
-        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id == device_id and schedule.message_type == message_type, self.scheduled), None)
+        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id ==
+                        device_id and schedule.message_type == message_type, self.scheduled), None)
         # Create or modify the schedule
-        if schedule == None:
+        if schedule is None:
             # Create new schedule
             schedule = ScheduledRequest()
             schedule.device_id = device_id
@@ -161,8 +169,9 @@ class API(threading.Thread):
         :param shareId: A share id
         :type device_id: int
         """
-        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id == device_id and schedule.message_type == message_type, self.scheduled), None)
-        if schedule != None:
+        schedule = next(filter(lambda schedule: schedule.share_id == shareId and schedule.device_id ==
+                        device_id and schedule.message_type == message_type, self.scheduled), None)
+        if schedule is not None:
             self.scheduled.remove(schedule)
             logger.info(f"Removed schedule {shareId}")
 
@@ -174,7 +183,7 @@ class API(threading.Thread):
         :type device_id: str
         """
         schedules = filter(lambda schedule: schedule.device_id == device_id, self.scheduled)
-        if schedules != None:
+        if schedules is not None:
             for schedule in schedules:
                 self.scheduled.remove(schedule)
 
@@ -184,7 +193,7 @@ class API(threading.Thread):
         :return: A list of device ids
         :rtype: str
         """
-        comm = self.comm() # This may be an anti pattern, fix latter
+        comm = self.comm()  # This may be an anti pattern, fix latter
         return comm.get_devices()
 
     def get_devices_detailed(self) -> List[object]:
@@ -227,13 +236,13 @@ class API(threading.Thread):
         :return: Status
         :rtype: bool
         """
-        if self.get_device(device_id) != None:
+        if self.get_device(device_id) is not None:
             return True
         else:
-            return False 
+            return False
 
     def connect_device(self, device_id: str) -> bool:
-        """Connects to a Programmor compatible Comms device. 
+        """Connects to a Programmor compatible Comms device.
 
         :param device_id: A Comm's device id
         :type device_id: str
@@ -277,7 +286,8 @@ class API(threading.Thread):
             self.connections[device_id].stop()
             del self.connections[device_id]
             return True
-        except:
+        except Exception as e:
+            logger.error(e)
             return False
 
     def disconnect_all_devices(self) -> None:
@@ -299,7 +309,7 @@ class API(threading.Thread):
         :type shareId: int
         """
         device = self.get_device(device_id)
-        if device == None:
+        if device is None:
             return
         # Request share from device
         request_message = self._request_message(message_type, shareId)
@@ -322,12 +332,12 @@ class API(threading.Thread):
         :param shareId: A share id
         :type shareId: int
         :param timeout_s: Waiting timeout in seconds
-        :type timeout_s: float 
+        :type timeout_s: float
         :return: A response share
         :rtype: bytes
         """
         device = self.get_device(device_id)
-        if device == None:
+        if device is None:
             return bytes(0)
         # Request share from device
         request_message_bytes = self._request_message(message_type, shareId).SerializeToString()
@@ -350,7 +360,7 @@ class API(threading.Thread):
         """
         # Check & Fetch device
         device = self.get_device(device_id)
-        if device == None:
+        if device is None:
             return
         # Generate publish message
         publish_message = self._publish_message(message_type, shareId, data)
@@ -412,7 +422,7 @@ class API(threading.Thread):
         # print(publishMessage.data.hex(" "))
         return publishMessage
 
-    def get_shares(self, device_id:str, to_time: datetime, from_time: datetime, shareId: int) -> List[bytes]:
+    def get_shares(self, device_id: str, to_time: datetime, from_time: datetime, shareId: int) -> List[bytes]:
         """Get a range of shares from the database.
 
         :param device_id: A Comm's device id
@@ -425,7 +435,7 @@ class API(threading.Thread):
         :type shareId: int
         """
         item = Query()
-        items = self.db.search(item.device == device_id and item.shareId == shareId and item.receivedAt >= to_time and item.receivedAt <= from_time )
+        items = self.db.search(item.device == device_id and item.shareId == shareId and item.receivedAt >= to_time and item.receivedAt <= from_time)
         messages = list()
         for i in items:
             messages.append(i.data)
@@ -456,9 +466,10 @@ class API(threading.Thread):
         logger.info(metadata)
         self.transactions.remove(metadata)
         # Save data to database
-        # self.db.insert({"id": metadata.id, "device": device_id, "action": response.action, "shareId": response.shareId ,"data": str(base64.b64encode(response.data)), "requestedAt": str(metadata.sent_at), "receivedAt": str(metadata.received_at)})
+        # self.db.insert({"id": metadata.id, "device": device_id, "action": response.action, "shareId": response.shareId ,
+        # "data": str(base64.b64encode(response.data)), "requestedAt": str(metadata.sent_at), "receivedAt": str(metadata.received_at)})
         # Pass data to callback functions
-        responseData:bytes = response.data[0:response.dataLength]
+        responseData: bytes = response.data[0:response.dataLength]
         responseJson: ResponseType = dict()
         responseJson["deviceId"] = device_id
         responseJson["actionType"] = response.action
