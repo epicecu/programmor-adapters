@@ -1,5 +1,5 @@
 # help:
-# help:	Programmor Tuning Software
+# help:	Programmor-Adapter An adapter software for Programmor GUI
 # help:
 
 # help: help					- displays this make file help information
@@ -10,14 +10,14 @@ help:
 # help: run					- starts the application
 .PHONY: run
 run:
-	@source venv/bin/activate
+	@. venv/bin/activate
 	@python -m usb
 
-# help: venv				- creates a virtual environment
+# help: venv					- creates a virtual environment
 .PHONY: venv
 venv:
 	@python3.11 -m venv venv
-	@source venv/bin/activate
+	@. venv/bin/activate
 
 # help: install					- installs the application
 .PHONY: install
@@ -58,7 +58,19 @@ test:
 tox:
 	@tox
 
-# help: proto				- compiles the protobug file (Only for testing purposes)
+# help: proto					- compiles the protobug file (Only for testing purposes)
 .PHONY: proto
 proto:
 	@find programmor_adapters/shared/proto -name '*.proto' -exec protoc --python_out=. programmor_adapters/shared/proto/transaction.proto \;
+
+# help: docsgen					- generates the documentation
+.PHONY: docsgen
+docsgen:
+	@cd documentation
+	@make html
+	@cd ..
+
+# help: docsrun					- serves the documentation
+.PHONY: docsrun
+docsrun:
+	@python3 -m http.server -d documentation/build/html

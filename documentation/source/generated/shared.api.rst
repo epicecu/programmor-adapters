@@ -9,7 +9,7 @@
 
    .. autosummary::
    
-      DATA_MAX_SIZE
+      TRANSACTION_MESSAGE_SIZE
    
    
 

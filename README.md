@@ -73,7 +73,7 @@ todo
 ## Docs
 
 While in the python virtual environment, navigate to `/documentation` and run the command `make html`
-View the docs in the browser by running `python3 -m http.server -d build/html`
+View the docs in the browser by running `make docsrun`
 
 ### Communications Flow Chart
 
@@ -97,7 +97,12 @@ GPL V2 © [Programmor](https://github.com/epicecu/programmor)
 
 ## Todo
 
-1. When messages are received from the device, the emit and receive on the HMI side takes too long to complete
+In no particular order
+
+1. Fix delay in message emits from Adapter to HMI
 2. Test with multiple USB devices connected
 3. Test on Windows 10, 11
 4. Test on Mac
+5. Increase code coverage with unit tests
+6. Update documentation
+7. Replace local database with sqlite
