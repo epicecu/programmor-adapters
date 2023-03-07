@@ -29,12 +29,12 @@ def generate_frame(fromRange: int = 0, toRange: int = FRAME_PAYLOAD_SIZE) -> Fra
     return in_data
 
 
-def test_initilise_comms():
+def test_initialise_comms():
     com = Connection()
     assert isinstance(com, Connection)
 
 
-def test_initilise_frame():
+def test_initialise_frame():
     frame = Frame()
     assert frame.preamble == 0x01
     assert type(frame.to_bytes()) is bytearray
@@ -53,7 +53,7 @@ def test_frame_to_bytes_then_from_bytes():
     frame.calculate_crc()
     # Generate bytes
     frame_as_bytes = frame.to_bytes()
-    # Unpack an see if the reuslt is correct
+    # Unpack an see if the result is correct
     from_frame = Frame(frame_as_bytes)
     # Check result
     assert from_frame.is_valid() is True

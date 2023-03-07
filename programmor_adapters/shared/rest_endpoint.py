@@ -15,7 +15,7 @@ class RestEndpoint(Endpoint):
 
     """REST Endpoint
     Provides a REST API endpoint for applications to interface with Programmor
-    compatiable devices.
+    compatible devices.
     """
 
     class ApiView(FlaskView):

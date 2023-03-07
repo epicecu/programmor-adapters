@@ -8,7 +8,7 @@ from shared.comm import Comm, Frame
 try:  # noqa: E722
     import hid  # Linux
 except Exception as e:
-    print("Failled to import HID library, install required binaries for your system")
+    print("Failed to import HID library, install required binaries for your system")
     print(e)
 
 try:  # noqa: E722
@@ -22,7 +22,7 @@ try:  # noqa: E722
         return device_strings
     hid.enumerate = enumerate
 except Exception:
-    print("Failled to import Pywinusb library")
+    print("Failed to import Pywinusb library")
 
 
 logger = logging.getLogger(__name__)

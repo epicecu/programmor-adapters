@@ -51,7 +51,7 @@ class ScheduledRequest():
 
 
 class RequestRecord():
-    """API Tranactions with the device
+    """API Transactions with the device
     """
     id: int
     device_id: str
@@ -124,7 +124,7 @@ class API(threading.Thread):
 
     def _process_scheduled_messages(self) -> None:
         """Process Scheduled Messages
-        Loop through the schedules and determin if the process time
+        Loop through the schedules and determine if the process time
         has elapsed the interval time.
         """
         for schedule in self.scheduled:
@@ -229,7 +229,7 @@ class API(threading.Thread):
         return self.connections.get(device_id, None)
 
     def check_device(self, device_id: str) -> bool:
-        """Checks if a device is avaliable and connected.
+        """Checks if a device is available and connected.
 
         :param device_id: A Comms device id
         :type device_id: str

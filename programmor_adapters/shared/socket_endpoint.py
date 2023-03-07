@@ -14,7 +14,7 @@ class SocketEndpoint(Endpoint):
 
     """Socket Endpoint
     Provides a SocketIO API endpoint for applications to interface with Programmor
-    compatiable devices.
+    compatible devices.
     """
 
     class ApiNamespace(Namespace):

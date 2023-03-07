@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class Comm(threading.Thread):
     """Communication Interface
     To be extended to support Programmor communication methods, self contained class using
-    python threading. Supports packetising data into Frames to receive & send to the device.
+    python threading. Supports packeting data into Frames to receive & send to the device.
     """
 
     def __init__(self) -> None:

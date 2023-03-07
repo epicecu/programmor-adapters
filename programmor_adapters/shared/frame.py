@@ -84,7 +84,7 @@ class Frame:
         if len(self.payload) > FRAME_PAYLOAD_SIZE:
             raise Exception("Payload size is greater then FRAME_PAYLOAD_SIZE")
         elif len(self.payload) < FRAME_PAYLOAD_SIZE:
-            # Padd out the payload to equal FRAME_PAYLOAD_SIZE
+            # Pad out the payload to equal FRAME_PAYLOAD_SIZE
             frame_bytes.extend(self.payload)
             frame_bytes.extend(bytes(FRAME_PAYLOAD_SIZE-len(self.payload)))
         else:

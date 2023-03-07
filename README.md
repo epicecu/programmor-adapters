@@ -9,7 +9,7 @@
 [![Tests](https://github.com/epicecu/programmor/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/epicecu/programmor/actions/workflows/tests.yml)
 
 ## Notes
-- The Gevent webserver is prefered over the eventlet server due to the server emit function failing to work and causing the server to restart, generating a new session id.  
+- The Gevent webserver is preferred over the eventlet server due to the server emit function failing to work and causing the server to restart, generating a new session id.  
 
 ## Install
 
@@ -37,10 +37,6 @@ pip install -r requirements_dev.txt
 ```
 
 ## Starting Development
-
-Set the `PROGRAMMOR_PROTO_FILE` environment variable to override the default behaviour for local testing
-with hardware development. This may be useful when the hardware repo may not be public yet and can not
-access the proto file via http get.
 
 ```bash
 make run

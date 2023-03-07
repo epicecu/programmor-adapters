@@ -11,7 +11,7 @@ void setup()
     elapsedTime = 0;
 
     // Init the usb comms
-    usb.initilise();
+    usb.initialise();
     // Register callback function
     auto fn = [](corelib::Buffer* b){
         return usingProto(b);
