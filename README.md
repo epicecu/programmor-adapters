@@ -2,7 +2,7 @@
 
 <img src="support/epicecu-programmor-logo.png" alt="EpicECU Programmor Adapters" width="400" />
 
-##### An open source tuning software communication adapters
+##### An open source tuning software communication adapter collection
 
 </div>
 
