@@ -60,11 +60,12 @@ make tox
 
 ## Packaging for Production
 
-To package apps for the local platform:
+To package app for the local platform:
 
 ```bash
-todo
+make installer
 ```
+This will generate an executable in /dist
 
 ## Docs
 
