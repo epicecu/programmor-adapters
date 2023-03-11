@@ -29,7 +29,7 @@ venv:
 
 # help: install					- installs the application
 .PHONY: install
-install: requirements.txt
+install:
 	@echo "Installing Application"
 	@make venv
 	@$(PIP) install -e .
@@ -37,7 +37,7 @@ install: requirements.txt
 
 # help: install-dev				- installs the application with development dependencies
 .PHONY: install-dev
-install-dev: requirements_dev.txt
+install-dev:
 	@echo "Installing with Development Dependencies"
 	@make venv
 	@make install
