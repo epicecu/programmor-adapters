@@ -6,7 +6,7 @@
 
 </div>
 
-[![Tests](https://github.com/epicecu/programmor/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/epicecu/programmor/actions/workflows/tests.yml)
+[![Tests](https://github.com/epicecu/programmor-adapters/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/epicecu/programmor-adapters/actions/workflows/tests.yml)
 
 ## Notes
 - The Gevent webserver is preferred over the eventlet server due to the server emit function failing to work and causing the server to restart, generating a new session id.  
