@@ -8,7 +8,7 @@ from shared.api import API
 from shared.socket_endpoint import SocketEndpoint
 from shared.rest_endpoint import RestEndpoint
 
-from usb.usb import USB
+from usb_adapter.usb import USB
 
 
 def main():

@@ -3,6 +3,7 @@ from shared.api import API
 from shared.types import MessageType, ResponseType
 from flask import Flask
 from flask_socketio import SocketIO, Namespace, emit
+from engineio.async_drivers import gevent  # noqa: F401
 import base64
 
 # Logging

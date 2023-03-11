@@ -6,3 +6,4 @@ mypy
 autopep8
 Sphinx
 rinohtype
+pyinstaller
