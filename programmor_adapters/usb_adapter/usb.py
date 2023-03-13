@@ -43,7 +43,6 @@ class USB(Comm):
         compatible_devices: List[str] = list()
         for device in all_devices:
             device_path: str = device['path'].decode(ENCODE)
-            # logger.debug(f"Checking {device_path}")
             if self.check_device_compatibility(device_path):
                 logger.debug("Found device")
                 device_id = hashlib.md5(device['path']).hexdigest()
@@ -59,7 +58,6 @@ class USB(Comm):
         try:
             device = hid.Device(path=path.encode(ENCODE))
         except Exception:
-            # logger.debug(f"Failed to open device {path}")
             self.blocking = False
             return False
         logger.debug(f"Checking device compatibility {path}")
@@ -71,10 +69,7 @@ class USB(Comm):
         try:
             # Write seems to be slow here??? need to investigate if its my crappy firmware code lol
             device.write(as_bytes)
-            print(frame)
-            print(len(as_bytes))
         except hid.HIDException:
-            # logger.debug("Failed to write")
             self.blocking = False
             return False
         sleep(0.001)
@@ -82,13 +77,11 @@ class USB(Comm):
         response_bytes = device.read(64, 1)
         # Connected, accepted request but not response
         if len(response_bytes) == 0:
-            logger.debug("No bytes returned")
             self.blocking = False
             return False
         # Process the response
         try:
             response = Frame(response_bytes)
-            # logger.debug(f"Response {response}")
         except Exception as e:
             logger.debug(e)
             logger.debug(f"Not enough returned data {len(response_bytes)}")
