@@ -1,28 +1,19 @@
 import logging
 import hashlib
+import os
 from time import sleep
 from typing import List, Dict
 
 from shared.comm import Comm, Frame
 
 try:  # noqa: E722
-    import hid  # Linux
+    full_path = os.path.realpath(__file__)
+    dir_path = os.path.dirname(full_path)
+    os.add_dll_directory(os.path.join(dir_path, "../../lib"))
+    import hid  # Linux & Windows
 except Exception as e:
     print("Failed to import HID library, install required binaries for your system")
     print(e)
-
-try:  # noqa: E722
-    import pywinusb.hid as hid  # Windows # noqa: F811
-
-    def enumerate() -> any:
-        device_strings: List[str] = list()
-        devices = hid.HidDeviceFilter().get_devices()
-        for device in devices:
-            device_strings.append(device.path)
-        return device_strings
-    hid.enumerate = enumerate
-except Exception:
-    print("Failed to import Pywinusb library")
 
 
 logger = logging.getLogger(__name__)
@@ -52,7 +43,9 @@ class USB(Comm):
         compatible_devices: List[str] = list()
         for device in all_devices:
             device_path: str = device['path'].decode(ENCODE)
+            # logger.debug(f"Checking {device_path}")
             if self.check_device_compatibility(device_path):
+                logger.debug("Found device")
                 device_id = hashlib.md5(device['path']).hexdigest()
                 self.device_path_lookup[device_id] = device_path
                 compatible_devices.append(device_id)
@@ -78,7 +71,10 @@ class USB(Comm):
         try:
             # Write seems to be slow here??? need to investigate if its my crappy firmware code lol
             device.write(as_bytes)
+            print(frame)
+            print(len(as_bytes))
         except hid.HIDException:
+            # logger.debug("Failed to write")
             self.blocking = False
             return False
         sleep(0.001)
@@ -86,6 +82,7 @@ class USB(Comm):
         response_bytes = device.read(64, 1)
         # Connected, accepted request but not response
         if len(response_bytes) == 0:
+            logger.debug("No bytes returned")
             self.blocking = False
             return False
         # Process the response

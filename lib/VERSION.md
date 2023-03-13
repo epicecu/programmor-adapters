@@ -1,0 +1,1 @@
+hidapi.dll v0.13.1
