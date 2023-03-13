@@ -1,28 +1,19 @@
 import logging
 import hashlib
+import os
 from time import sleep
 from typing import List, Dict
 
 from shared.comm import Comm, Frame
 
 try:  # noqa: E722
-    import hid  # Linux
+    full_path = os.path.realpath(__file__)
+    dir_path = os.path.dirname(full_path)
+    os.add_dll_directory(os.path.join(dir_path, "../../lib"))
+    import hid  # Linux & Windows
 except Exception as e:
     print("Failed to import HID library, install required binaries for your system")
     print(e)
-
-try:  # noqa: E722
-    import pywinusb.hid as hid  # Windows # noqa: F811
-
-    def enumerate() -> any:
-        device_strings: List[str] = list()
-        devices = hid.HidDeviceFilter().get_devices()
-        for device in devices:
-            device_strings.append(device.path)
-        return device_strings
-    hid.enumerate = enumerate
-except Exception:
-    print("Failed to import Pywinusb library")
 
 
 logger = logging.getLogger(__name__)
@@ -53,6 +44,7 @@ class USB(Comm):
         for device in all_devices:
             device_path: str = device['path'].decode(ENCODE)
             if self.check_device_compatibility(device_path):
+                logger.debug("Found device")
                 device_id = hashlib.md5(device['path']).hexdigest()
                 self.device_path_lookup[device_id] = device_path
                 compatible_devices.append(device_id)
@@ -66,7 +58,6 @@ class USB(Comm):
         try:
             device = hid.Device(path=path.encode(ENCODE))
         except Exception:
-            # logger.debug(f"Failed to open device {path}")
             self.blocking = False
             return False
         logger.debug(f"Checking device compatibility {path}")
@@ -91,7 +82,6 @@ class USB(Comm):
         # Process the response
         try:
             response = Frame(response_bytes)
-            # logger.debug(f"Response {response}")
         except Exception as e:
             logger.debug(e)
             logger.debug(f"Not enough returned data {len(response_bytes)}")

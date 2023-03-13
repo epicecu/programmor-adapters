@@ -1,7 +1,8 @@
 protobuf
 grpcio-tools
-hid
+hidapi
 tinydb
+typing_extensions
 Flask
 Flask-SocketIO
 flask-classful
