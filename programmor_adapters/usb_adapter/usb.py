@@ -56,7 +56,6 @@ class USB(Comm):
     # Checks if this device is a
     def check_device_compatibility(self, path: str) -> bool:
         self.blocking = True
-        sleep(0.001)
         # Connect to device
         try:
             device = hid.Device(path=path.encode(ENCODE))
@@ -70,14 +69,14 @@ class USB(Comm):
         frame.checksum()
         as_bytes: bytes = bytes(frame.to_bytes())
         try:
-            # Write seems to be slow here??? need to investigate if its my crappy firmware code lol
             device.write(as_bytes)
+            print("t")
         except hid.HIDException:
             self.blocking = False
             return False
-        sleep(0.001)
         # Read response
-        response_bytes = device.read(64, 1)
+        response_bytes = device.read(64, 5)
+        print(response_bytes)
         # Connected, accepted request but not response
         if len(response_bytes) == 0:
             self.blocking = False
@@ -97,6 +96,7 @@ class USB(Comm):
         if response.preamble != 0x03:
             logger.debug("Frame type incorrect")
             return False
+        device.close()
         self.blocking = False
         return True
 
