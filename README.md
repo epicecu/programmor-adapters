@@ -17,6 +17,8 @@ Clone the repo and install dependencies:
 
 Linux/Mac
 
+sudo apt-get install -y libhidapi-dev
+
 ```bash
 git clone --branch master https://github.com/epicecu/programmor.git
 cd programmor

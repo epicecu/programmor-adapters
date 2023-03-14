@@ -189,7 +189,7 @@ class SocketEndpoint(Endpoint):
     def start(self) -> None:
         """Starts both the Flask, and the Socket app
         """
-        self.socket.run(self.app)
+        self.socket.run(self.app, host="0.0.0.0")
 
     def stop(self) -> None:
         """Stops the application

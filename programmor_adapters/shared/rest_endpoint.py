@@ -137,7 +137,7 @@ class RestEndpoint(Endpoint):
     def start(self) -> None:
         """Starts the Flask app
         """
-        self.app.run()
+        self.app.run(host="0.0.0.0")
 
     def stop(self) -> None:
         """Stops the application
