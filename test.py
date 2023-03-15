@@ -27,9 +27,12 @@ for dev in libusb_package.find(find_all=True):
 
     print("---break")
     for i, interface in enumerate(configuration):
-        if dev.is_kernel_driver_active(i):
-            dev.detach_kernel_driver(i)
-            # We may want to reattach the device back to the kernel,,, not sure if required
+        try:
+            if dev.is_kernel_driver_active(i):
+                dev.detach_kernel_driver(i)
+                # We may want to reattach the device back to the kernel,,, not sure if required
+        except NotImplementedError:
+            pass
 
         endpoint_out = usb.util.find_descriptor(
             interface,
