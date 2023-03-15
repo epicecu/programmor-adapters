@@ -1,6 +1,7 @@
 protobuf
 grpcio-tools
-hidapi
+pyusb
+libusb_package
 tinydb
 typing_extensions
 Flask
