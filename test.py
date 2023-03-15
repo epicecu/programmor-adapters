@@ -21,12 +21,16 @@ for dev in libusb_package.find(find_all=True):
     # if dev.manufacturer != "Teensyduino":
     #     continue
 
-    dev.set_configuration()
+    # dev.set_configuration()
 
     configuration = dev.get_active_configuration()
 
     print("---break")
-    for interface in configuration:
+    for i, interface in enumerate(configuration):
+        if dev.is_kernel_driver_active(i):
+            dev.detach_kernel_driver(i)
+            # We may want to reattach the device back to the kernel,,, not sure if required
+
         endpoint_out = usb.util.find_descriptor(
             interface,
             # match the first OUT endpoint
@@ -56,7 +60,7 @@ for dev in libusb_package.find(find_all=True):
             continue
         print("-----next operation")
         try:
-            received = endpoint_in.read(64, 5)
+            received = endpoint_in.read(64, 1)
         except usb.core.USBTimeoutError:
             continue
         received_as_bytes = bytes(received)
