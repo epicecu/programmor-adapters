@@ -1,6 +1,7 @@
 from shared.comm import Comm
 from shared.datetime import diff_ms
 from shared.types import MessageType, ResponseType
+from shared.comms_manager import CommsManager
 from datetime import datetime
 from time import sleep
 from typing import List, Dict, Callable
@@ -75,7 +76,7 @@ class API(threading.Thread):
     to package the data into Frames.
     """
 
-    def __init__(self, comms_method: Comm,  database_storage_file: str = "./adapter-db.json") -> None:
+    def __init__(self, comms_manager: CommsManager,  database_storage_file: str = "./adapter-db.json") -> None:
         """Constructor method
         """
         # Thread
@@ -88,7 +89,7 @@ class API(threading.Thread):
         self.fns: List[Callable[[ResponseType], None]] = list()
         self.transactions: List[RequestRecord] = list()
         self.db = TinyDB(f"{database_storage_file}")
-        self.comm = comms_method
+        self.comms_manager: CommsManager = comms_manager()
 
     def start(self) -> None:
         """Starts the thread
@@ -193,8 +194,7 @@ class API(threading.Thread):
         :return: A list of device ids
         :rtype: str
         """
-        comm = self.comm()  # This may be an anti pattern, fix latter
-        return comm.get_devices()
+        return self.comms_manager.get_devices()
 
     def get_devices_detailed(self) -> List[object]:
         """Get Devices Detailed
@@ -203,7 +203,9 @@ class API(threading.Thread):
         devices = list()
         # Request the common 1 message for each device
         for device_id in device_ids:
-            self.connect_device(device_id)
+            device_online = self.check_device(device_id)
+            if not device_online:
+                self.connect_device(device_id)
             common = transaction_pb2.Common1()
             try:
                 common.ParseFromString(self.request_message_sync(device_id, MessageType.COMMON, 1))
@@ -212,10 +214,12 @@ class API(threading.Thread):
                 continue
             device = {
                 "deviceId": device_id,
+                "connected": device_online,
                 "common1": MessageToJson(common)
             }
             devices.append(device)
-            self.disconnect_device(device_id)
+            if not device_online:
+                self.disconnect_device(device_id)
         return devices
 
     def get_device(self, device_id: str) -> Comm:
@@ -226,7 +230,7 @@ class API(threading.Thread):
         :return: A Comm object
         :rtype: Comm
         """
-        return self.connections.get(device_id, None)
+        return self.comms_manager.get_device(device_id)
 
     def check_device(self, device_id: str) -> bool:
         """Checks if a device is available and connected.
@@ -236,10 +240,7 @@ class API(threading.Thread):
         :return: Status
         :rtype: bool
         """
-        if self.get_device(device_id) is not None:
-            return True
-        else:
-            return False
+        return self.comms_manager.check_device(device_id)
 
     def connect_device(self, device_id: str) -> bool:
         """Connects to a Programmor compatible Comms device.
@@ -249,23 +250,7 @@ class API(threading.Thread):
         :return: Status
         :rtype: bool
         """
-        if self.check_device(device_id):
-            print(self.connections)
-            logger.info(f"Device already connected {device_id}")
-            return False
-        # Create USB Connection and connect
-        logger.debug("Creating a new comms obj")
-        self.connections[device_id] = self.comm()
-        self.connections[device_id].set_received_message_callback(lambda data: self._on_receive(device_id, data))
-        self.connections[device_id].get_devices()
-        self.connections[device_id].start()
-        if not self.connections[device_id].connect(device_id):
-            logger.debug(f"Failed to connect to device {device_id}")
-            self.connections[device_id].stop()
-            del self.connections[device_id]
-            return False
-        logger.info(f"Connected to device {device_id}")
-        return True
+        return self.comms_manager.connect_device(device_id, self._on_receive)
 
     def disconnect_device(self, device_id: str) -> bool:
         """Disconnects a Comms device.
@@ -275,30 +260,17 @@ class API(threading.Thread):
         :return: Status
         :rtype: bool
         """
-        if not self.check_device(device_id):
-            return
-        # Close connection and delete
-        try:
-            # Clear all schedules with this device
-            self.clear_all_schedules(device_id)
-            # Close
-            self.connections[device_id].close()
-            self.connections[device_id].stop()
-            del self.connections[device_id]
-            return True
-        except Exception as e:
-            logger.error(e)
-            return False
+        # Clear all schedules with this device
+        self.clear_all_schedules(device_id)
+        return self.comms_manager.disconnect_device(device_id)
 
     def disconnect_all_devices(self) -> None:
         """Disconnects all devices from the adapter
         """
-        list_of_devices: List[str] = list()
-        for device_id, _ in self.connections.items():
-            list_of_devices.append(device_id)
-        # Stores a list of ids to Prevent the iteration failing for deletion of the connection
-        for device_id in list_of_devices:
-            self.disconnect_device(device_id)
+        # Clear all schedules with this device
+        for device_id in self.get_devices():
+            self.clear_all_schedules(device_id)
+        self.comms_manager.disconnect_all_devices()
 
     def request_message(self, device_id: str, message_type: MessageType, shareId: int) -> None:
         """Request a Share from the Comms device

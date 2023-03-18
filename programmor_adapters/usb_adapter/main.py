@@ -8,7 +8,7 @@ from shared.api import API
 from shared.socket_endpoint import SocketEndpoint
 from shared.rest_endpoint import RestEndpoint
 
-from usb_adapter.usb import USB
+from usb_adapter.usb_manager import USBManager
 
 
 def main():
@@ -66,7 +66,7 @@ def main():
     # sys.exit(app.exec())
 
     # Programmor Adapter API function
-    api = API(USB)
+    api = API(USBManager)
     api.start()
 
     # Flask application

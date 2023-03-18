@@ -273,7 +273,11 @@ export const useHmiStore = defineStore('hmi', {
                     device.connected = false;
                     device.deviceId = responseDevice["deviceId"]
                     device.common1 = message.toJSON();
-                    device.status = DeviceStatus.Disconencted;
+                    if(responseDevice["connected"]){
+                        device.status = DeviceStatus.Connected;
+                    }else{
+                        device.status = DeviceStatus.Disconencted;
+                    }
                     this.addDevice(device);
                     console.log(device);
                 });

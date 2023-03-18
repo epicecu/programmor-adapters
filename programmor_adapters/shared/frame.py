@@ -5,6 +5,22 @@ from enum import Enum
 FRAME_PAYLOAD_SIZE = 50
 
 
+class BytesLengthError(Exception):
+    """Exception raised for incorrect bytes size
+    """
+
+    def __init__(self, length) -> None:
+        super().__init__(f"Expected a bytes size of 64 got {length}")
+
+
+class PayloadLengthError(Exception):
+    """Exception raised for incorrect payload size
+    """
+
+    def __init__(self, length) -> None:
+        super().__init__(f"Expected a payload size of {FRAME_PAYLOAD_SIZE} got {length}")
+
+
 class ProcessState(Enum):
     """Communication Interface Process State.
     """
@@ -60,7 +76,7 @@ class Frame:
 
     def from_bytes(self, frame_bytes: bytes):
         if len(frame_bytes) != 64:
-            raise Exception(f"Bytes length {len(frame_bytes)} does not equal 64")
+            raise BytesLengthError(len(frame_bytes))
         # Unpack
         self.preamble = struct.unpack("<H", frame_bytes[0:2])[0]
         self.destinationAddress = struct.unpack("<B", frame_bytes[2:3])[0]
@@ -82,7 +98,7 @@ class Frame:
         frame_bytes.extend(struct.pack("<B", self.frameTotal))
         # Check if the payload is the correct size
         if len(self.payload) > FRAME_PAYLOAD_SIZE:
-            raise Exception("Payload size is greater then FRAME_PAYLOAD_SIZE")
+            raise PayloadLengthError(len(self.payload))
         elif len(self.payload) < FRAME_PAYLOAD_SIZE:
             # Pad out the payload to equal FRAME_PAYLOAD_SIZE
             frame_bytes.extend(self.payload)
