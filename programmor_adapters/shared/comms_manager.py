@@ -51,8 +51,3 @@ class CommsManager:
             device_ids.append(device_id)
         for device_id in device_ids:
             self.disconnect_device(device_id)
-
-    # Get list of devices, generate device_ids, cache
-    # Get detailed devices, cache
-    # Pause/Resume comms
-    # Start/Stop comms

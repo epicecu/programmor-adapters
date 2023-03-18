@@ -20,7 +20,7 @@ class USBManager(CommsManager):
 
     def __init__(self) -> None:
         super().__init__(USB)
-        
+
         # Type hinting
         self.comm: USB
 
@@ -39,7 +39,7 @@ class USBManager(CommsManager):
         logger.debug("Getting device ids")
         compatible_devices: List[str] = list()
 
-        dev: usb.core.Device # hinting for-loop variable
+        dev: usb.core.Device  # hinting for-loop variable
         for dev in libusb_package.find(find_all=True):
             # Check if device is available
             if dev is None:
@@ -48,7 +48,7 @@ class USBManager(CommsManager):
             try:
                 assert dev.manufacturer is not None
                 assert dev.product is not None
-            except Exception as e:
+            except Exception:
                 continue
             # print(f"{dev.manufacturer} {dev.product}")
             # Check if the device is already in use

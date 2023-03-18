@@ -2,7 +2,6 @@ import usb.core
 import usb.util
 import libusb_package
 from time import sleep
-from typing import List, Dict, Tuple
 
 from shared.comm import Comm
 from usb_adapter.helper import get_device_endpoints
@@ -77,4 +76,3 @@ class USB(Comm):
             self.device_endpoint_in = None
             self.device_endpoint_out = None
             logger.debug(f"Closed {self.__str__()}")
-

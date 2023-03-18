@@ -4,17 +4,22 @@ from enum import Enum
 
 FRAME_PAYLOAD_SIZE = 50
 
+
 class BytesLengthError(Exception):
     """Exception raised for incorrect bytes size
     """
+
     def __init__(self, length) -> None:
         super().__init__(f"Expected a bytes size of 64 got {length}")
+
 
 class PayloadLengthError(Exception):
     """Exception raised for incorrect payload size
     """
+
     def __init__(self, length) -> None:
         super().__init__(f"Expected a payload size of {FRAME_PAYLOAD_SIZE} got {length}")
+
 
 class ProcessState(Enum):
     """Communication Interface Process State.
