@@ -9,19 +9,6 @@ from usb_adapter.helper import get_device_endpoints
 import logging
 logger = logging.getLogger(__name__)
 
-# try:  # noqa: E722
-#     full_path = os.path.realpath(__file__)
-#     dir_path = os.path.dirname(full_path)
-#     os.add_dll_directory(os.path.join(dir_path, "../../lib"))
-# except Exception:
-#     logger.debug("Failed to add dll for Windows operating systems")
-
-# try:  # noqa: E722
-#     import hid  # Linux & Windows
-# except Exception as e:
-#     logger.error("Failed to import HID library, install required binaries for your system")
-#     logger.error(e)
-
 
 class USB(Comm):
 
