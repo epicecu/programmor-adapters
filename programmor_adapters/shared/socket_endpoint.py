@@ -10,8 +10,6 @@ from flask_socketio import SocketIO, Namespace, emit
 from engineio.async_drivers import gevent  # noqa: F401
 import base64
 import queue
-import time
-
 
 # Logging
 import logging
@@ -21,6 +19,7 @@ thread = None
 thread_lock = Lock()
 thread_stop_signal = False
 message_data_queue = queue.Queue()
+
 
 def background_thread(socket: SocketIO):
     """Example of how to send server generated events to clients."""
