@@ -183,7 +183,7 @@ class API(threading.Thread):
         :param device_id: A Comms device id
         :type device_id: str
         """
-        schedules = filter(lambda schedule: schedule.device_id == device_id, self.scheduled)
+        schedules = list(filter(lambda schedule: schedule.device_id == device_id, self.scheduled))
         if schedules is not None:
             for schedule in schedules:
                 self.scheduled.remove(schedule)

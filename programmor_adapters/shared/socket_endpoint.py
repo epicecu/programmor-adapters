@@ -1,14 +1,38 @@
+# import gevent.monkey
+# gevent.monkey.patch_all()
+
 from shared.endpoint import Endpoint
 from shared.api import API
 from shared.types import MessageType, ResponseType
+from threading import Lock
 from flask import Flask
 from flask_socketio import SocketIO, Namespace, emit
 from engineio.async_drivers import gevent  # noqa: F401
 import base64
+import queue
+import time
+
 
 # Logging
 import logging
 logger = logging.getLogger(__name__)
+
+thread = None
+thread_lock = Lock()
+thread_stop_signal = False
+message_data_queue = queue.Queue()
+
+def background_thread(socket: SocketIO):
+    """Example of how to send server generated events to clients."""
+    while True:
+        if thread_stop_signal:
+            break
+        socket.sleep(0.001)
+        try:
+            response: ResponseType = message_data_queue.get(block=False)
+            socket.emit('message_data', response, namespace='/api')
+        except queue.Empty:
+            pass
 
 
 class SocketEndpoint(Endpoint):
@@ -23,6 +47,7 @@ class SocketEndpoint(Endpoint):
         """ API Reference
         """
         api: API
+        socket: SocketIO
 
         """Socket Namespace
         """
@@ -31,11 +56,18 @@ class SocketEndpoint(Endpoint):
             """Client Connects
             """
             logger.info("Socket client connected")
+            global thread
+            with thread_lock:
+                if thread is None:
+                    logger.debug("thread created")
+                    thread = self.socket.start_background_task(background_thread, self.socket)
 
         def on_disconnect(self):
             """Client Disconnects
             """
             logger.info("Socket client disconnected")
+            global thread_stop_signal
+            thread_stop_signal = True
             self.api.disconnect_all_devices()
 
         def on_get_devices(self, _):
@@ -178,13 +210,15 @@ class SocketEndpoint(Endpoint):
         self.socket: SocketIO = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")
         self.ns = self.ApiNamespace('/api')
         self.ns.api = api
+        self.ns.socket = self.socket
         self.ns.api.register_callback(lambda data: self.emit_data(data))
         self.socket.on_namespace(self.ns)
 
     def emit_data(self, response: ResponseType):
         """Emit Data
         """
-        self.ns.emit('message_data', response, namespace='/api')
+        # self.ns.emit('message_data', response, namespace='/api')
+        message_data_queue.put(response)
 
     def start(self) -> None:
         """Starts both the Flask, and the Socket app
