@@ -26,7 +26,7 @@ def background_thread(socket: SocketIO):
     while True:
         if thread_stop_signal:
             break
-        socket.sleep(0.001)
+        socket.sleep(0.001)  # 1ms
         try:
             response: ResponseType = message_data_queue.get(block=False)
             socket.emit('message_data', response, namespace='/api')
@@ -65,8 +65,14 @@ class SocketEndpoint(Endpoint):
             """Client Disconnects
             """
             logger.info("Socket client disconnected")
+            # Stop the emit thread
             global thread_stop_signal
             thread_stop_signal = True
+            self.socket.sleep(0.1)
+            thread_stop_signal = False
+            global thread
+            with thread_lock:
+                thread = None
             self.api.disconnect_all_devices()
 
         def on_get_devices(self, _):

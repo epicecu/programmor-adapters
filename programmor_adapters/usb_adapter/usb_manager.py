@@ -106,7 +106,10 @@ class USBManager(CommsManager):
             logger.debug(f"Device already connected {device_id}")
             return False
         # Get the product and vender ids
-        vender, product = self.device_vender_product_lookup.get(device_id)
+        lookup = self.device_vender_product_lookup.get(device_id)
+        if lookup is None:
+            return False
+        vender, product = lookup
         if vender is None or product is None:
             return False
         # Create USB Connection and connect

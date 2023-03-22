@@ -34,10 +34,15 @@ export const useMessageStore = defineStore('message', {
                 return foundShare;
             }
         },
+        clear: (state) => {
+            return () => {
+                state.messages = [];
+            }
+        }
     },
     actions: {
         addMessage(message: MessageInfo){
             this.messages.push(message);
-        }
+        },
     }
 });

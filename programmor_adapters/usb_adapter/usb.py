@@ -41,7 +41,7 @@ class USB(Comm):
         buffer: bytes = bytes(buffer)
         if len(buffer) > 0 and self.device is None:
             return  # Not connected to device
-        self.device_endpoint_out.write(buffer)
+        self.device_endpoint_out.write(buffer, 1)
         sleep(0.01)
 
     def connect(self) -> bool:

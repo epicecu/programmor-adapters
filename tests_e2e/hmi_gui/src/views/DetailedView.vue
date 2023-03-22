@@ -36,8 +36,10 @@ export default {
   },
   watch:{
     share1: function(share: MessageInfo){
-        this.counterStart = share.message["startingNumber"];
-        this.counterEnd = share.message["endingNumber"];
+        if(share){
+            this.counterStart = share.message["startingNumber"];
+            this.counterEnd = share.message["endingNumber"];
+        }
     }
   },
   methods:{
@@ -103,6 +105,9 @@ export default {
             this.storeHmi.publishShare(this.device?.deviceId, 1, this.counterStart, this.counterEnd);
         }
         console.log("Pub")
+    },
+    clear(){
+        this.storeMessage.clear();
     }
   }
 };
@@ -152,25 +157,24 @@ export default {
             </table>
 
             <div class="mt-4">
-                <div class="row">
-                    <div class="col">
-                        <button class="btn bg-white" @click="requestCommon(1)">Request Common1 Message</button>
-                    </div>
-                    <div class="col">
-                        <button class="btn bg-white" @click="setCommonSchedule(1, 2000)">Set Commmon1 Schedule 2s</button>
-                    </div>
-                    <div class="col">
-                        <button class="btn bg-white" @click="clearCommonSchedule(1)">Clear Commmon1 Schedule 2s</button>
-                    </div>
-                    <div class="col">
-                        <button class="btn bg-white" @click="requestShare(1)">Request Share1 Message</button>
-                    </div>
-                    <div class="col">
-                        <button class="btn bg-white" @click="setShareSchedule(1, 2000)">Set Share1 Schedule 2s</button>
-                    </div>
-                    <div class="col">
-                        <button class="btn bg-white" @click="clearShareSchedule(1)">Clear Share1 Schedule 2s</button>
-                    </div>
+                <div class="">
+                    <p class="m-1">Common1 Schedule</p>
+                    <button class="btn bg-white m-1" @click="requestCommon(1)">Request Message</button>
+                    <button class="btn bg-white m-1" @click="setCommonSchedule(1, 2000)">Set Commmon1 Schedule 2s</button>
+                    <button class="btn bg-white m-1" @click="clearCommonSchedule(1)">Clear Commmon1 Schedule 2s</button>
+                </div>
+                <div>
+                    <p class="m-1">Share1 Schedule</p>
+                    <button class="btn bg-white m-1" @click="requestShare(1)">Request Message</button>
+                    <button class="btn bg-white m-1" @click="setShareSchedule(1, 1000)">Set 1Hz</button>
+                    <button class="btn bg-white m-1" @click="setShareSchedule(1, 400)">Set 2.5Hz</button>
+                    <button class="btn bg-white m-1" @click="setShareSchedule(1, 200)">Set 5Hz</button>
+                    <button class="btn bg-white m-1" @click="setShareSchedule(1, 100)">Set 10Hz</button>
+                    <button class="btn bg-white m-1" @click="setShareSchedule(1, 66.66)">Set 15Hz</button>
+                    <button class="btn bg-white m-1" @click="setShareSchedule(1, 33.33)">Set 30Hz</button>
+                    <button class="btn bg-dark text-white m-1" @click="setShareSchedule(1, 16.66)">Set 60Hz</button>
+                    <button class="btn bg-dark text-white m-1" @click="setShareSchedule(1, 10)">Set 100Hz</button>
+                    <button class="btn bg-white m-1" @click="clearShareSchedule(1)">Clear</button>
                 </div>
             </div>
 
@@ -199,7 +203,7 @@ export default {
             </div>
 
             <div class="mt-4">
-                <p>Total messages {{ messages.length }}</p>
+                <p>Total messages {{ messages.length }}</p> <button class="btn bg-white m-1" @click="clear">Clear</button>
 
                 <div v-for="(message, i) in messages" :key="i">
                    ShareId {{ message["shareId"] }}, Message: {{ message["message"] }}
