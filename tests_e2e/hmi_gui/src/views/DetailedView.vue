@@ -11,13 +11,14 @@ export default {
     const storeHmi = useHmiStore()
     const { selectedDevice } = storeToRefs(storeHmi)
     const storeMessage = useMessageStore()
-    const { messages } = storeToRefs(storeMessage)
+    const { messages, throughput } = storeToRefs(storeMessage)
     return {
         storeHmi,
         selectedDevice,
         DeviceStatus,
         storeMessage,
-        messages
+        messages,
+        throughput
     }
   },
   data(){
@@ -172,6 +173,7 @@ export default {
                     <button class="btn bg-white m-1" @click="setShareSchedule(1, 100)">Set 10Hz</button>
                     <button class="btn bg-white m-1" @click="setShareSchedule(1, 66.66)">Set 15Hz</button>
                     <button class="btn bg-white m-1" @click="setShareSchedule(1, 33.33)">Set 30Hz</button>
+                    <button class="btn bg-white m-1" @click="setShareSchedule(1, 22)">Set 41Hz</button>
                     <button class="btn bg-dark text-white m-1" @click="setShareSchedule(1, 16.66)">Set 60Hz</button>
                     <button class="btn bg-dark text-white m-1" @click="setShareSchedule(1, 10)">Set 100Hz</button>
                     <button class="btn bg-white m-1" @click="clearShareSchedule(1)">Clear</button>
@@ -203,7 +205,7 @@ export default {
             </div>
 
             <div class="mt-4">
-                <p>Total messages {{ messages.length }}</p> <button class="btn bg-white m-1" @click="clear">Clear</button>
+                <p>Total messages: {{ messages.length }} Throughput: {{ throughput }}Hz</p> <button class="btn bg-white m-1" @click="clear">Clear</button>
 
                 <div v-for="(message, i) in messages" :key="i">
                    ShareId {{ message["shareId"] }}, Message: {{ message["message"] }}

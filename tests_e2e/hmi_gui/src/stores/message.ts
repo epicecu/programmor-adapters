@@ -16,7 +16,8 @@ export interface MessageInfo {
 
 export const useMessageStore = defineStore('message', {
     state: () => ({
-        messages: [] as MessageInfo[]
+        messages: [] as MessageInfo[],
+        throughput: 0 as Number
     }),
     getters: {
         getShare: (state) => {
@@ -42,6 +43,10 @@ export const useMessageStore = defineStore('message', {
     },
     actions: {
         addMessage(message: MessageInfo){
+            if(this.messages.length>0){
+                const last = this.messages[this.messages.length - 1]
+                this.throughput = 1000/(message.createdAt - last.createdAt);
+            }
             this.messages.push(message);
         },
     }

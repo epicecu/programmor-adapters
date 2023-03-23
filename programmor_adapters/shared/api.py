@@ -60,10 +60,16 @@ class RequestRecord():
     received_at: datetime = None
     created_at: datetime = datetime.now()
 
+    def get_processing_time_ms(self) -> int:
+        if self.sent_at is None or self.received_at is None:
+            return -1
+        else:
+            return diff_ms(self.received_at, self.sent_at, 5)
+
     def __str__(self) -> str:
         if self.received_at is not None:
             return f"""RequestRecord(id: {self.id} device_id: {self.device_id} sent_at: {self.sent_at}
-            received_at: {self.received_at} created_at: {self.created_at} duration: {self.received_at - self.sent_at})"""
+            received_at: {self.received_at} created_at: {self.created_at} duration: {self.get_processing_time_ms()}ms)"""
         else:
             return f"RequestRecord(id: {self.id} device_id: {self.device_id} sent_at: {self.sent_at} created_at: {self.created_at})"
 
