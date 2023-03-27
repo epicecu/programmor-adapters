@@ -72,10 +72,14 @@ class USBManager(CommsManager):
                 endpoint_out.write(request_frame_as_bytes, 1)
             except usb.core.USBTimeoutError:
                 continue
+            except usb.core.USBError:
+                continue
             # Read bytes
             try:
                 received = endpoint_in.read(64, 1)
             except usb.core.USBTimeoutError:
+                continue
+            except usb.core.USBError:
                 continue
             # Convert bytes to Frame
             received_as_bytes = bytes(received)

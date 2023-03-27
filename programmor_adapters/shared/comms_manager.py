@@ -18,9 +18,6 @@ class CommsManager:
     def get_devices(self) -> List[str]:
         raise NotImplementedError("get_devices method not implemented")
 
-    def get_devices_detailed(self) -> List[object]:
-        raise NotImplementedError("get_devices_detailed method not implemented")
-
     def get_device(self, device_id: str) -> Comm:
         return self.connections.get(device_id, None)
 

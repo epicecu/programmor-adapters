@@ -42,7 +42,6 @@ class USB(Comm):
         if len(buffer) > 0 and self.device is None:
             return  # Not connected to device
         self.device_endpoint_out.write(buffer, 1)
-        sleep(0.01)
 
     def connect(self) -> bool:
         self.device: usb.core.Device = libusb_package.find(idVendor=self.device_id_vender, idProduct=self.device_id_product)
