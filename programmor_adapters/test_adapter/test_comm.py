@@ -1,7 +1,5 @@
 import threading
-import random
-from math import ceil
-from typing import Callable, Dict, List
+from typing import Callable
 from queue import Queue
 from time import sleep, perf_counter
 
@@ -82,7 +80,6 @@ class TestComm(threading.Thread):
         if self.fn is not None:
             self.callback(data)
         return ProcessState.OK
-
 
     def process_outgoing_data(self) -> ProcessState.ERROR:
         # Check if we have data to send

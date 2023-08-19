@@ -1,13 +1,8 @@
-import hashlib
-from typing import List, Dict, Callable, Tuple
+from typing import List, Callable
 from shared.comms_manager import CommsManager
-from shared.frame import Frame, BytesLengthError
 from test_adapter.test_comm import TestComm
 from test_adapter.test_device import TestDevice
 
-import usb.core
-import usb.util
-import libusb_package
 
 # Logging
 import logging
@@ -40,7 +35,7 @@ class TestManager(CommsManager):
         # Create Test Connection and connect
         logger.debug("Creating a new comms device")
         test_device = self.get_test_device(device_id)
-        if test_device == None:
+        if test_device is None:
             return False
         self.connections[device_id] = TestComm(test_device)
         self.connections[device_id].set_received_message_callback(lambda data: callback(device_id, data))
