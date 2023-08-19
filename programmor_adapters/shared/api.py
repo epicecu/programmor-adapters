@@ -355,7 +355,8 @@ class API(threading.Thread):
         device.send_message(publish_message_bytes)
 
     # Private Request Message
-    def _request_message(self, message_type: MessageType, shareId: int) -> transaction_pb2.TransactionMessage:
+    @staticmethod
+    def _request_message(message_type: MessageType, shareId: int) -> transaction_pb2.TransactionMessage:
         """A Request Message
 
         :param shareId: A share id
@@ -374,7 +375,8 @@ class API(threading.Thread):
         requestMessage.data = bytes(DATA_MAX_SIZE)
         return requestMessage
 
-    def _publish_message(self, message_type: MessageType, shareId: int, data: bytes) -> transaction_pb2.TransactionMessage:
+    @staticmethod
+    def _publish_message(message_type: MessageType, shareId: int, data: bytes) -> transaction_pb2.TransactionMessage:
         """A Publish Message
 
         :param shareId: A share id

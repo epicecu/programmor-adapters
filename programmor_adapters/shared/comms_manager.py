@@ -8,12 +8,11 @@ logger = logging.getLogger(__name__)
 
 class CommsManager:
 
-    def __init__(self, comms_method: Comm) -> None:
+    def __init__(self) -> None:
         """CommsManager
         Manages all the device communications
         """
         self.connections: Dict[str, Comm] = dict()
-        self.comm = comms_method
 
     def get_devices(self) -> List[str]:
         raise NotImplementedError("get_devices method not implemented")

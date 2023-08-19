@@ -265,8 +265,3 @@ class Comm(threading.Thread):
         """Closes connection to the device.
         """
         raise NotImplementedError("Close method not implemented")
-
-    def get_devices(self) -> List[str]:
-        """Get List of Device Ids
-        """
-        raise NotImplementedError("Get devices method not implemented")
