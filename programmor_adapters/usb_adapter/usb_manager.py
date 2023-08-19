@@ -19,10 +19,7 @@ ENCODE = "utf-8"
 class USBManager(CommsManager):
 
     def __init__(self) -> None:
-        super().__init__(USB)
-
-        # Type hinting
-        self.comm: USB
+        super().__init__()
 
         # Device Id to path lookup
         self.device_vender_product_lookup: Dict[str, Tuple[int, int]] = dict()
@@ -118,7 +115,7 @@ class USBManager(CommsManager):
             return False
         # Create USB Connection and connect
         logger.debug("Creating a new comms device")
-        self.connections[device_id] = self.comm(vender, product)
+        self.connections[device_id] = USB(vender, product)
         self.connections[device_id].set_received_message_callback(lambda data: callback(device_id, data))
         self.connections[device_id].start()
         if not self.connections[device_id].connect():

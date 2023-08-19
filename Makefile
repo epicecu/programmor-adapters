@@ -13,12 +13,19 @@ PIP = $(VENV)/bin/pip
 help:
 	@grep "^# help\:" Makefile | sed 's/\# help\: *//'
 
-# help: run					- starts the application
-.PHONY: run
-run:
+# help: run-usb					- starts the application
+.PHONY: run-usb
+run-usb:
 	@echo "Starting Programmor USB Adapter"
 	@. ./$(VENV)/bin/activate
-	$(PYTHON) -m adapter_usb
+	$(PYTHON) -m usb_adapter
+
+# help: run-test					- starts the application
+.PHONY: run-test
+run-test:
+	@echo "Starting Programmor Test Adapter"
+	@. ./$(VENV)/bin/activate
+	$(PYTHON) -m test_adapter
 
 # help: venv					- creates a virtual environment
 .PHONY: venv
@@ -81,6 +88,7 @@ tox:
 .PHONY: proto
 proto:
 	@find programmor_adapters/shared/proto -name '*.proto' -exec protoc --python_out=. programmor_adapters/shared/proto/transaction.proto \;
+	@find programmor_adapters/test_adapter/proto -name '*.proto' -exec protoc --python_out=. programmor_adapters/test_adapter/proto/test.proto \;
 
 # help: docsgen					- generates the documentation
 .PHONY: docsgen
