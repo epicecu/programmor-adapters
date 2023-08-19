@@ -158,17 +158,17 @@ class RestEndpoint(Endpoint):
             self.api.clear_scheduled_message(device_id, MessageType.SHARE, share_id)
             return jsonify({'None': None})
 
-    def __init__(self, app: Flask, api: API) -> None:
+    def __init__(self, app: Flask, api: API, port: int) -> None:
         """REST Endpoint
         """
-        super().__init__(app, api)
+        super().__init__(app, api, port)
         self.ApiView.api = api
         self.ApiView.register(self.app)
 
     def start(self) -> None:
         """Starts the Flask app
         """
-        self.app.run(host="0.0.0.0")
+        self.app.run(host="0.0.0.0", port=self.port)
 
     def stop(self) -> None:
         """Stops the application

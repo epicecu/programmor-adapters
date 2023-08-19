@@ -210,8 +210,8 @@ class SocketEndpoint(Endpoint):
     """SocketIO Endpoint; This is a singleton
     """
 
-    def __init__(self, app: Flask, api: API) -> None:
-        super().__init__(app, api)
+    def __init__(self, app: Flask, api: API, port: int) -> None:
+        super().__init__(app, api, port)
         self.socket: SocketIO = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")
         self.ns = self.ApiNamespace('/api')
         self.ns.api = api
@@ -228,7 +228,7 @@ class SocketEndpoint(Endpoint):
     def start(self) -> None:
         """Starts both the Flask, and the Socket app
         """
-        self.socket.run(self.app, host="0.0.0.0")
+        self.socket.run(self.app, host="0.0.0.0", port=self.port)
 
     def stop(self) -> None:
         """Stops the application

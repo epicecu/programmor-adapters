@@ -4,7 +4,7 @@ from shared.types import MessageType, ResponseType
 from shared.comms_manager import CommsManager
 from datetime import datetime
 from time import sleep
-from typing import Any, List, Dict, Callable, Optional, Type
+from typing import Any, List, Dict, Callable, Optional
 from uuid import uuid4
 from tinydb import TinyDB, Query
 import threading
@@ -82,7 +82,7 @@ class API(threading.Thread):
     to package the data into Frames.
     """
 
-    def __init__(self, comms_manager: Type[CommsManager],  database_storage_file: str = "./adapter-db.json") -> None:
+    def __init__(self, comms_manager: CommsManager,  database_storage_file: str = "./adapter-db.json") -> None:
         """Constructor method
         """
         # Thread
@@ -95,7 +95,7 @@ class API(threading.Thread):
         self.fns: List[Callable[[ResponseType], None]] = list()
         self.transactions: List[RequestRecord] = list()
         self.db = TinyDB(f"{database_storage_file}")
-        self.comms_manager: CommsManager = comms_manager()
+        self.comms_manager: CommsManager = comms_manager
 
     def start(self) -> None:
         """Starts the thread

@@ -13,11 +13,19 @@ ENCODE = "utf-8"
 
 class TestManager(CommsManager):
 
-    def __init__(self) -> None:
+    def __init__(self, test_device_group: int) -> None:
         super().__init__()
         self.devices: List[TestDevice] = list()
-        self.devices.append(TestDevice(name="January", device_id="fakeusb-janmoo1", id=2, serial_number=123))
-        self.devices.append(TestDevice(name="February", device_id="fakeusb-febroff2", id=3, serial_number=456))
+        # Allows for multiple test adapters to be running at the same time
+        if test_device_group == 1:
+            self.devices.append(TestDevice(name="January", device_id="fakeusb-janmoo1", id=2, serial_number=123))
+            self.devices.append(TestDevice(name="February", device_id="fakeusb-febroff2", id=3, serial_number=456))
+        elif test_device_group == 2:
+            self.devices.append(TestDevice(name="March", device_id="fakeusb-marchmah", id=4, serial_number=789))
+            self.devices.append(TestDevice(name="April", device_id="fakeusb-aprrar", id=5, serial_number=101112))
+        elif test_device_group == 3:
+            self.devices.append(TestDevice(name="May", device_id="fakeusb-maynaa", id=6, serial_number=131415))
+            self.devices.append(TestDevice(name="June", device_id="fakeusb-jundee", id=7, serial_number=161718))
 
     def get_devices(self) -> List[str]:
         """Get Device Ids

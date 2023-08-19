@@ -17,11 +17,35 @@ def main():
     parser = argparse.ArgumentParser(description='An open source automotive tuning software test adapter')
 
     parser.add_argument(
+        "-g",
+        "--group",
+        help="The test group.",
+        required=False,
+        default=1
+    )
+
+    parser.add_argument(
+        "-ps",
+        "--port-socket",
+        help="The socket port to host on.",
+        required=False,
+        default=5101
+    )
+
+    parser.add_argument(
+        "-pr",
+        "--port-rest",
+        help="The REST port to host on.",
+        required=False,
+        default=8101
+    )
+
+    parser.add_argument(
         "-f",
         "--log-file",
         help="The file to append all logs to.",
         required=False,
-        default="~/.programmor/log.txt"
+        default="~/.programmor/log-test-adapter.txt"
     )
 
     parser.add_argument(
@@ -60,8 +84,11 @@ def main():
     # Start Application
     logger.info("Programmor Test Adaptation")
 
+    # Comms manager
+    comms_manager = TestManager(args.group)
+
     # Programmor Adapter API function
-    api = API(TestManager)
+    api = API(comms_manager)
     api.start()
 
     # Flask application
@@ -69,8 +96,8 @@ def main():
     app.config['SECRET_KEY'] = 'secret!ya'
 
     # Programmor Adapter Endpoints to the GUI
-    rest = RestEndpoint(app, api)
-    socket = SocketEndpoint(app, api)
+    rest = RestEndpoint(app, api, int(args.port_rest))
+    socket = SocketEndpoint(app, api, int(args.port_socket))
 
     # Starts the Socket-Flask, and Flask app
     try:

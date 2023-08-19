@@ -18,11 +18,27 @@ def main():
     parser = argparse.ArgumentParser(description='An open source automotive tuning software usb adapter')
 
     parser.add_argument(
+        "-ps",
+        "--port-socket",
+        help="The socket port to host on.",
+        required=False,
+        default=5001
+    )
+
+    parser.add_argument(
+        "-pr",
+        "--port-rest",
+        help="The REST port to host on.",
+        required=False,
+        default=8001
+    )
+
+    parser.add_argument(
         "-f",
         "--log-file",
         help="The file to append all logs to.",
         required=False,
-        default="~/.programmor/log.txt"
+        default="~/.programmor/log-usb-adapter.txt"
     )
 
     parser.add_argument(
@@ -65,8 +81,11 @@ def main():
     # Application to go here
     # sys.exit(app.exec())
 
+    # Comms manager
+    comms_manager = USBManager()
+
     # Programmor Adapter API function
-    api = API(USBManager)
+    api = API(comms_manager)
     api.start()
 
     # Flask application
@@ -74,8 +93,8 @@ def main():
     app.config['SECRET_KEY'] = 'secret!ya'
 
     # Programmor Adapter Endpoints to the GUI
-    rest = RestEndpoint(app, api)
-    socket = SocketEndpoint(app, api)
+    rest = RestEndpoint(app, api, args.port_rest)
+    socket = SocketEndpoint(app, api, args.port_socket)
 
     # Starts the Socket-Flask, and Flask app
     try:
