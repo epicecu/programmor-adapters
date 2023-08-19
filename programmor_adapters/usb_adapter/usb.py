@@ -1,3 +1,4 @@
+from typing import Optional
 import usb.core
 import usb.util
 import libusb_package
@@ -14,9 +15,9 @@ class USB(Comm):
     def __init__(self, device_id_vender: int, device_id_product: int) -> None:
         super().__init__()
         # Connected device
-        self.device: usb.core.Device = None
-        self.device_endpoint_in: usb.core.Endpoint = None
-        self.device_endpoint_out: usb.core.Endpoint = None
+        self.device: Optional[usb.core.Device] = None
+        self.device_endpoint_in: Optional[usb.core.Endpoint] = None
+        self.device_endpoint_out: Optional[usb.core.Endpoint] = None
         # Device id
         self.device_id_vender: int = device_id_vender
         self.device_id_product: int = device_id_product
@@ -32,18 +33,21 @@ class USB(Comm):
         if self.device is None:
             return bytes(0)
         try:
-            return self.device_endpoint_in.read(64, 1)
+            if self.device_endpoint_in is not None:
+                return bytes(self.device_endpoint_in.read(64, 1))
+            else:
+                return bytes(0)
         except Exception:
             return bytes(0)
 
     def write(self, buffer: bytes) -> None:
-        buffer: bytes = bytes(buffer)
         if len(buffer) > 0 and self.device is None:
             return  # Not connected to device
-        self.device_endpoint_out.write(buffer, 1)
+        if self.device_endpoint_out is not None:
+            self.device_endpoint_out.write(bytes(buffer), 1)
 
     def connect(self) -> bool:
-        self.device: usb.core.Device = libusb_package.find(idVendor=self.device_id_vender, idProduct=self.device_id_product)
+        self.device: Optional[usb.core.Device] = libusb_package.find(idVendor=self.device_id_vender, idProduct=self.device_id_product)  # type: ignore
         if self.device is None:
             return False
         self.device_endpoint_in, self.device_endpoint_out = get_device_endpoints(self.device)

@@ -1,5 +1,5 @@
 import threading
-from typing import Callable
+from typing import Callable, Optional
 from queue import Queue
 from time import sleep, perf_counter
 
@@ -26,7 +26,7 @@ class TestComm(threading.Thread):
         # Message as bytes
         self.messages_outgoing: Queue[bytes] = Queue()
         # Received message callback
-        self.fn: Callable[[bytes], None] = None
+        self.fn: Optional[Callable[[bytes], None]] = None
         self.lastMessage: bytes = bytes()
         # Test device
         self.device = device
@@ -71,7 +71,7 @@ class TestComm(threading.Thread):
             # Sleep the thread
             # sleep(0.0001)  # 0.1ms
 
-    def process_incoming_data(self) -> ProcessState.ERROR:
+    def process_incoming_data(self) -> ProcessState:
         # Read data
         data = self.read()
         if len(data) == 0:
@@ -81,7 +81,7 @@ class TestComm(threading.Thread):
             self.callback(data)
         return ProcessState.OK
 
-    def process_outgoing_data(self) -> ProcessState.ERROR:
+    def process_outgoing_data(self) -> ProcessState:
         # Check if we have data to send
         if self.messages_outgoing.empty():
             return ProcessState.ERROR
@@ -137,7 +137,8 @@ class TestComm(threading.Thread):
         :param message_bytes: Message to send as bytes
         :type message_bytes: bytes
         """
-        self.fn(message_bytes)
+        if self.fn is not None:
+            self.fn(message_bytes)
 
     def is_callback(self) -> bool:
         """Checks if a callback function is set.

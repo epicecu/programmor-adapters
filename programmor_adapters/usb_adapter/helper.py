@@ -34,3 +34,4 @@ def get_device_endpoints(dev: usb.core.Device) -> Tuple[usb.core.Endpoint, usb.c
         if endpoint_in is None or endpoint_out is None:
             return None, None
         return endpoint_in, endpoint_out
+    return None, None

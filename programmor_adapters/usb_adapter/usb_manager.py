@@ -102,7 +102,7 @@ class USBManager(CommsManager):
 
         return compatible_devices
 
-    def connect_device(self, device_id: str, callback: Callable) -> bool:
+    def connect_device(self, device_id: str, callback: Callable[[str, bytes], None]) -> bool:
         if self.check_device(device_id):
             logger.debug(f"Device already connected {device_id}")
             return False
@@ -111,8 +111,6 @@ class USBManager(CommsManager):
         if lookup is None:
             return False
         vender, product = lookup
-        if vender is None or product is None:
-            return False
         # Create USB Connection and connect
         logger.debug("Creating a new comms device")
         self.connections[device_id] = USB(vender, product)

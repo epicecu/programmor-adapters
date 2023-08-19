@@ -80,7 +80,7 @@ class RestEndpoint(Endpoint):
             """
             data = self.api.request_message_sync(device_id, MessageType.SHARE, share_id, 1)
             encoded = base64.urlsafe_b64encode(data)
-            data_urlfriendly = encoded.rstrip("=")
+            data_urlfriendly = encoded.rstrip("=".encode())
             return jsonify({'data': data_urlfriendly})
 
         def publish_share(self, device_id: str, share_id: int, data_urlfriendly: str):
@@ -99,12 +99,13 @@ class RestEndpoint(Endpoint):
             padding = 4 - (len(data_urlfriendly) % 4)
             data_urlfriendly_mod = data_urlfriendly + ("=" * padding)
             data = base64.urlsafe_b64decode(data_urlfriendly_mod)
-            return jsonify({'None': self.api.publish_message(device_id, MessageType.SHARE, share_id, data)})
+            self.api.publish_message(device_id, MessageType.SHARE, share_id, data)
+            return jsonify({'None': None})
 
-        def set_scheduled_message(self, device_id: str, share_id: int, interval: int):
+        def set_scheduled_message_common(self, device_id: str, share_id: int, interval: int):
             """Set Scheduled Message
 
-            GET: /api/set_scheduled_message/<device_id>/<share_id>/<interval>/
+            GET: /api/set_scheduled_message_common/<device_id>/<common_id>/<interval>/
 
             :param device_id: A Programmor compatible device id
             :type device_id: str
@@ -113,19 +114,49 @@ class RestEndpoint(Endpoint):
             :param interval: Scheduled interval to request share in milliseconds
             :type interval: int
             """
-            return jsonify({'None': self.api.set_scheduled_message(device_id, share_id, interval)})
+            self.api.set_scheduled_message(device_id, MessageType.COMMON, share_id, interval)
+            return jsonify({'None': None})
 
-        def clear_scheduled_message(self, device_id: str, share_id: int):
+        def set_scheduled_message_share(self, device_id: str, share_id: int, interval: int):
+            """Set Scheduled Message
+
+            GET: /api/set_scheduled_message_share/<device_id>/<share_id>/<interval>/
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            :param share_id: Protobuf model share id
+            :type device_id: int
+            :param interval: Scheduled interval to request share in milliseconds
+            :type interval: int
+            """
+            self.api.set_scheduled_message(device_id, MessageType.SHARE, share_id, interval)
+            return jsonify({'None': None})
+
+        def clear_scheduled_message_common(self, device_id: str, share_id: int):
             """Clear Scheduled Message
 
-            GET: /api/clear_scheduled_message/<device_id>/<share/
+            GET: /api/clear_scheduled_message_common/<device_id>/<common_id>/
 
             :param device_id: A Programmor compatible device id
             :type device_id: str
             :param share_id: Protobuf model share id
             :type device_id: str
             """
-            return jsonify({'None': self.api.clear_scheduled_message(device_id, share_id)})
+            self.api.clear_scheduled_message(device_id, MessageType.COMMON, share_id)
+            return jsonify({'None': None})
+
+        def clear_scheduled_message_share(self, device_id: str, share_id: int):
+            """Clear Scheduled Message
+
+            GET: /api/clear_scheduled_message_share/<device_id>/<share_id>/
+
+            :param device_id: A Programmor compatible device id
+            :type device_id: str
+            :param share_id: Protobuf model share id
+            :type device_id: str
+            """
+            self.api.clear_scheduled_message(device_id, MessageType.SHARE, share_id)
+            return jsonify({'None': None})
 
     def __init__(self, app: Flask, api: API) -> None:
         """REST Endpoint

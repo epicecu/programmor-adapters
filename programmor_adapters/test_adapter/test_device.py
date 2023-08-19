@@ -1,4 +1,5 @@
 import time
+from typing import List, Optional
 import shared.proto.transaction_pb2 as transaction_pb2
 from shared.types import MessageType
 import test_adapter.proto.test_pb2 as test_pb2
@@ -25,12 +26,12 @@ class TestDevice:
         self.shares_version = shares_version
         self.firmware_version = firmware_version
         # Share 1: Counter
-        self.counter_start = 0
-        self.counter_end = 100
-        self.counter = self.counter_start
+        self.counter_start: int = 0
+        self.counter_end: int = 100
+        self.counter: int = self.counter_start
         # Device
-        self.elapsed_time = 0
-        self.outbound_data = list()
+        self.elapsed_time: float = 0
+        self.outbound_data: List[bytes] = list()
 
     def tick(self) -> None:
         current_time = time.perf_counter()
@@ -46,16 +47,16 @@ class TestDevice:
     # Process Data
     # Adapter -> Test Device
     def process_data(self, data: bytes) -> None:
-        inMessage = transaction_pb2.TransactionMessage()
+        inMessage = transaction_pb2.TransactionMessage()  # type: ignore
         try:
             inMessage.ParseFromString(bytes(data[0:TRANSACTION_MESSAGE_SIZE]))
         except BaseException:
             return
 
         # Request action
-        if inMessage.action == transaction_pb2.TransactionMessage.COMMON_REQUEST:
+        if inMessage.action == transaction_pb2.TransactionMessage.COMMON_REQUEST:  # type: ignore
             # Common request
-            commonMessage: transaction_pb2.Common1 = transaction_pb2.Common1()
+            commonMessage: transaction_pb2.Common1 = transaction_pb2.Common1()  # type: ignore
             commonMessage.id = self.id
             commonMessage.registryId = self.registry_id
             commonMessage.serialNumber = self.serial_number
@@ -65,18 +66,18 @@ class TestDevice:
             self.outbound_data.append(bytes(self.response_message(MessageType.COMMON, 1, inMessage.token,
                                       commonMessage.SerializeToString()).SerializeToString()))
 
-        elif inMessage.action == transaction_pb2.TransactionMessage.SHARE_REQUEST:
+        elif inMessage.action == transaction_pb2.TransactionMessage.SHARE_REQUEST:  # type: ignore
             # Share request
-            testMessage: test_pb2.TestMessage = test_pb2.Share1()
+            testMessage: test_pb2.TestMessage = test_pb2.Share1()  # type: ignore
             testMessage.startingNumber = self.counter_start
             testMessage.endingNumber = self.counter_end
             testMessage.counter = self.counter
             self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 1, inMessage.token, testMessage.SerializeToString()).SerializeToString()))
 
-        elif inMessage.action == transaction_pb2.TransactionMessage.SHARE_PUBLISH:
+        elif inMessage.action == transaction_pb2.TransactionMessage.SHARE_PUBLISH:  # type: ignore
             # Share publish
             inData: bytes = inMessage.data[0:inMessage.dataLength]
-            testMessage: test_pb2.TestMessage = test_pb2.Share1()
+            testMessage: test_pb2.TestMessage = test_pb2.Share1()  # type: ignore
             try:
                 testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
             except BaseException:
@@ -95,13 +96,13 @@ class TestDevice:
             return bytes(0)
 
     @staticmethod
-    def response_message(message_type: MessageType, shareId: int, token: int, data: bytes) -> transaction_pb2.TransactionMessage:
-        responseMessage = transaction_pb2.TransactionMessage()
+    def response_message(message_type: MessageType, shareId: int, token: int, data: Optional[bytes]) -> transaction_pb2.TransactionMessage:  # type: ignore
+        responseMessage = transaction_pb2.TransactionMessage()  # type: ignore
         responseMessage.token = token
         if message_type == MessageType.COMMON:
-            responseMessage.action = transaction_pb2.TransactionMessage.COMMON_RESPONSE
+            responseMessage.action = transaction_pb2.TransactionMessage.COMMON_RESPONSE  # type: ignore
         else:
-            responseMessage.action = transaction_pb2.TransactionMessage.SHARE_RESPONSE
+            responseMessage.action = transaction_pb2.TransactionMessage.SHARE_RESPONSE  # type: ignore
         responseMessage.shareId = shareId
         if data is None:
             data = bytes(0)

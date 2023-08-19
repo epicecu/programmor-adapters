@@ -1,7 +1,7 @@
 import threading
 import random
 from math import ceil
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 from queue import Queue
 from time import sleep, perf_counter
 
@@ -30,7 +30,7 @@ class Comm(threading.Thread):
         self.inFrames: Dict[int, List[Frame]] = {}
         self.outFrames: Dict[int, List[Frame]] = {}
         # Received message callback
-        self.fn: Callable[[bytes], None] = None
+        self.fn: Callable[[bytes], None] | None = None
         self.lastMessage: bytes = bytes()
 
     def start(self) -> None:
@@ -99,7 +99,7 @@ class Comm(threading.Thread):
             return ProcessState.ERROR
 
         # Get Queue of frames for the FrameId
-        frames: List[Frame] = self.inFrames.get(frame.frameId)
+        frames: Optional[List[Frame]] = self.inFrames.get(frame.frameId)
         if frames is None:
             self.inFrames[frame.frameId] = list()
             self.inFrames[frame.frameId].append(frame)
@@ -235,7 +235,8 @@ class Comm(threading.Thread):
         :param message_bytes: Message to send as bytes
         :type message_bytes: bytes
         """
-        self.fn(message_bytes)
+        if self.fn is not None:
+            self.fn(message_bytes)
 
     def is_callback(self) -> bool:
         """Checks if a callback function is set.
@@ -265,3 +266,8 @@ class Comm(threading.Thread):
         """Closes connection to the device.
         """
         raise NotImplementedError("Close method not implemented")
+
+    def connect(self) -> bool:
+        """Opens a connection to the device
+        """
+        raise NotImplementedError("Connect method not implemented")

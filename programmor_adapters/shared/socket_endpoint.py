@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 thread = None
 thread_lock = Lock()
 thread_stop_signal = False
-message_data_queue = queue.Queue()
+message_data_queue: queue.Queue[ResponseType] = queue.Queue()
 
 
 def background_thread(socket: SocketIO):
@@ -219,7 +219,7 @@ class SocketEndpoint(Endpoint):
         self.ns.api.register_callback(lambda data: self.emit_data(data))
         self.socket.on_namespace(self.ns)
 
-    def emit_data(self, response: ResponseType):
+    def emit_data(self, response: ResponseType) -> None:
         """Emit Data
         """
         # self.ns.emit('message_data', response, namespace='/api')

@@ -4,14 +4,14 @@ from shared.types import MessageType, ResponseType
 from shared.comms_manager import CommsManager
 from datetime import datetime
 from time import sleep
-from typing import List, Dict, Callable
+from typing import Any, List, Dict, Callable, Optional, Type
 from uuid import uuid4
 from tinydb import TinyDB, Query
 import threading
 import base64
 
 # Transaction Protobuf File
-from google.protobuf.json_format import MessageToJson
+from google.protobuf.json_format import MessageToJson  # type: ignore
 import shared.proto.transaction_pb2 as transaction_pb2
 
 # Logging
@@ -57,14 +57,14 @@ class RequestRecord():
     id: int
     device_id: str
     sent_at: datetime = datetime.now()
-    received_at: datetime = None
+    received_at: Optional[datetime] = None
     created_at: datetime = datetime.now()
 
     def get_processing_time_ms(self) -> int:
         if self.sent_at is None or self.received_at is None:
             return -1
         else:
-            return diff_ms(self.received_at, self.sent_at, 5)
+            return int(diff_ms(self.received_at, self.sent_at, 5))
 
     def __str__(self) -> str:
         if self.received_at is not None:
@@ -82,7 +82,7 @@ class API(threading.Thread):
     to package the data into Frames.
     """
 
-    def __init__(self, comms_manager: CommsManager,  database_storage_file: str = "./adapter-db.json") -> None:
+    def __init__(self, comms_manager: Type[CommsManager],  database_storage_file: str = "./adapter-db.json") -> None:
         """Constructor method
         """
         # Thread
@@ -140,7 +140,7 @@ class API(threading.Thread):
                 logger.debug(f"Processing schedule {schedule.share_id} {schedule.interval_ms}")
                 schedule.tick()
 
-    def set_scheduled_message(self, device_id: str, message_type: MessageType, shareId: int, interval_ms: float = 100) -> None:
+    def set_scheduled_message(self, device_id: str, message_type: MessageType, shareId: int, interval_ms: int = 100) -> None:
         """Set Schedule Message
 
         :param device_id: A Comms device id
@@ -202,7 +202,7 @@ class API(threading.Thread):
         """
         return self.comms_manager.get_devices()
 
-    def get_devices_detailed(self) -> List[object]:
+    def get_devices_detailed(self) -> List[Dict[str, Any]]:
         """Get Devices Detailed
         """
         device_ids = self.get_devices()
@@ -212,7 +212,7 @@ class API(threading.Thread):
             device_online = self.check_device(device_id)
             if not device_online:
                 self.connect_device(device_id)
-            common = transaction_pb2.Common1()
+            common = transaction_pb2.Common1()  # type: ignore
             try:
                 common.ParseFromString(self.request_message_sync(device_id, MessageType.COMMON, 1))
             except BaseException as e:
@@ -228,13 +228,13 @@ class API(threading.Thread):
                 self.disconnect_device(device_id)
         return devices
 
-    def get_device(self, device_id: str) -> Comm:
+    def get_device(self, device_id: str) -> Optional[Comm]:
         """Gets a connected Comms device by id, returns None if the device is not connected.
 
         :param device_id: A Comms device id
         :type device_id: str
         :return: A Comm object
-        :rtype: Comm
+        :rtype: Comm or None
         """
         return self.comms_manager.get_device(device_id)
 
@@ -319,12 +319,12 @@ class API(threading.Thread):
             return bytes(0)
         # Request share from device
         request_message_bytes = self._request_message(message_type, shareId).SerializeToString()
-        response = transaction_pb2.TransactionMessage()
+        response = transaction_pb2.TransactionMessage()  # type: ignore
         try:
             response.ParseFromString(bytes(device.send_then_receive_message(request_message_bytes, timeout_s)[0:TRANSACTION_MESSAGE_SIZE]))
         except BaseException:
             return bytes(0)
-        return response.data[0:response.dataLength]
+        return bytes(response.data[0:response.dataLength])
 
     def publish_message(self, device_id: str, message_type: MessageType, shareId: int, data: bytes) -> None:
         """Publish a Share to the Comms device
@@ -339,7 +339,7 @@ class API(threading.Thread):
         # Check & Fetch device
         device = self.get_device(device_id)
         if device is None:
-            return
+            return None
         # Generate publish message
         publish_message = self._publish_message(message_type, shareId, data)
         # Generate transaction record
@@ -356,7 +356,7 @@ class API(threading.Thread):
 
     # Private Request Message
     @staticmethod
-    def _request_message(message_type: MessageType, shareId: int) -> transaction_pb2.TransactionMessage:
+    def _request_message(message_type: MessageType, shareId: int) -> transaction_pb2.TransactionMessage:  # type: ignore
         """A Request Message
 
         :param shareId: A share id
@@ -364,19 +364,19 @@ class API(threading.Thread):
         :return: A transaction message
         :rtype: transaction_pb2.TransactionMessage
         """
-        requestMessage = transaction_pb2.TransactionMessage()
+        requestMessage = transaction_pb2.TransactionMessage()  # type: ignore
         requestMessage.token = uuid4().int >> 96
         if message_type == MessageType.COMMON:
-            requestMessage.action = transaction_pb2.TransactionMessage.COMMON_REQUEST
+            requestMessage.action = transaction_pb2.TransactionMessage.COMMON_REQUEST  # type: ignore
         else:
-            requestMessage.action = transaction_pb2.TransactionMessage.SHARE_REQUEST
+            requestMessage.action = transaction_pb2.TransactionMessage.SHARE_REQUEST  # type: ignore
         requestMessage.shareId = shareId
         requestMessage.dataLength = 1
         requestMessage.data = bytes(DATA_MAX_SIZE)
         return requestMessage
 
     @staticmethod
-    def _publish_message(message_type: MessageType, shareId: int, data: bytes) -> transaction_pb2.TransactionMessage:
+    def _publish_message(message_type: MessageType, shareId: int, data: Optional[bytes]) -> transaction_pb2.TransactionMessage:  # type: ignore
         """A Publish Message
 
         :param shareId: A share id
@@ -384,12 +384,12 @@ class API(threading.Thread):
         :return: A transaction message
         :rtype: transaction_pb2.TransactionMessage
         """
-        publishMessage = transaction_pb2.TransactionMessage()
+        publishMessage = transaction_pb2.TransactionMessage()  # type: ignore
         publishMessage.token = uuid4().int >> 96
         if message_type == MessageType.COMMON:
-            publishMessage.action = transaction_pb2.TransactionMessage.COMMON_PUBLISH
+            publishMessage.action = transaction_pb2.TransactionMessage.COMMON_PUBLISH  # type: ignore
         else:
-            publishMessage.action = transaction_pb2.TransactionMessage.SHARE_PUBLISH
+            publishMessage.action = transaction_pb2.TransactionMessage.SHARE_PUBLISH  # type: ignore
         publishMessage.shareId = shareId
         if data is None:
             data = bytes(0)
@@ -429,14 +429,14 @@ class API(threading.Thread):
         :param data: Return data from the device
         :type data: bytes
         """
-        response = transaction_pb2.TransactionMessage()
+        response = transaction_pb2.TransactionMessage()  # type: ignore
         try:
             response.ParseFromString(bytes(data[0:TRANSACTION_MESSAGE_SIZE]))
         except BaseException:
             return
         # Confirm the received data is in response to a transaction
-        filtered_transactions = filter(lambda record: record.id == response.token and record.device_id == device_id, self.transactions)
-        filtered_transactions = list(filtered_transactions)
+        filtered_transactions_list = filter(lambda record: record.id == response.token and record.device_id == device_id, self.transactions)
+        filtered_transactions = list(filtered_transactions_list)
         if len(filtered_transactions) == 0:
             logger.debug("Could not match received data to a transaction record")
             return
@@ -450,11 +450,8 @@ class API(threading.Thread):
         # "data": str(base64.b64encode(response.data)), "requestedAt": str(metadata.sent_at), "receivedAt": str(metadata.received_at)})
         # Pass data to callback functions
         responseData: bytes = response.data[0:response.dataLength]
-        responseJson: ResponseType = dict()
-        responseJson["deviceId"] = device_id
-        responseJson["actionType"] = response.action
-        responseJson["shareId"] = int(response.shareId)
-        responseJson["data"] = str(base64.b64encode(responseData).decode("utf-8"))
+        responseJson: ResponseType = ResponseType(deviceId=device_id, actionType=response.action, shareId=int(
+            response.shareId), data=str(base64.b64encode(responseData).decode("utf-8")))
         self._callback(responseJson)
 
     def register_callback(self, fn: Callable[[ResponseType], None]) -> None:

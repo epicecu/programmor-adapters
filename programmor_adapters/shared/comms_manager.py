@@ -1,4 +1,4 @@
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Optional
 from shared.comm import Comm
 
 # Logging
@@ -17,18 +17,18 @@ class CommsManager:
     def get_devices(self) -> List[str]:
         raise NotImplementedError("get_devices method not implemented")
 
-    def get_device(self, device_id: str) -> Comm:
+    def get_device(self, device_id: str) -> Optional[Comm]:
         return self.connections.get(device_id, None)
 
     def check_device(self, device_id: str) -> bool:
         return self.get_device(device_id) is not None
 
-    def connect_device(self, device_id: str, callback: Callable) -> bool:
+    def connect_device(self, device_id: str, callback: Callable[[str, bytes], None]) -> bool:
         raise NotImplementedError("connect_device method not implemented")
 
     def disconnect_device(self, device_id: str) -> bool:
         if not self.check_device(device_id):
-            return
+            return False
         # Close connection and delete
         try:
             # Close

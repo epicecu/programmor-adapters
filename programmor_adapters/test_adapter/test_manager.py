@@ -28,7 +28,7 @@ class TestManager(CommsManager):
             compatible_devices.append(device.device_id)
         return compatible_devices
 
-    def connect_device(self, device_id: str, callback: Callable) -> bool:
+    def connect_device(self, device_id: str, callback: Callable[[str, bytes], None]) -> bool:
         if self.check_device(device_id):
             logger.debug(f"Device already connected {device_id}")
             return False
@@ -37,7 +37,7 @@ class TestManager(CommsManager):
         test_device = self.get_test_device(device_id)
         if test_device is None:
             return False
-        self.connections[device_id] = TestComm(test_device)
+        self.connections[device_id] = TestComm(test_device)  # type: ignore
         self.connections[device_id].set_received_message_callback(lambda data: callback(device_id, data))
         self.connections[device_id].start()
         if not self.connections[device_id].connect():

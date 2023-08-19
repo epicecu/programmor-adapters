@@ -1,4 +1,5 @@
 import struct
+from typing import Optional
 import zlib
 from enum import Enum
 
@@ -52,7 +53,7 @@ class Frame:
     payload: bytes = bytes()  # size of 50 bytes
     crc: int = 0  # check sum of the all the above variables
 
-    def __init__(self, frame_bytes: bytes = None) -> None:
+    def __init__(self, frame_bytes: Optional[bytes] = None) -> None:
         if frame_bytes is not None:
             self.from_bytes(frame_bytes)
 
