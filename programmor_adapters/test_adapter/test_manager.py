@@ -34,6 +34,8 @@ class TestManager(CommsManager):
         compatible_devices: List[str] = list()
         for device in self.devices:
             compatible_devices.append(device.device_id)
+        print(self.devices)
+        print(compatible_devices)
         return compatible_devices
 
     def connect_device(self, device_id: str, callback: Callable[[str, bytes], None]) -> bool:

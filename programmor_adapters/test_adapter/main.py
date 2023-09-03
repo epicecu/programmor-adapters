@@ -85,7 +85,7 @@ def main():
     logger.info("Programmor Test Adaptation")
 
     # Comms manager
-    comms_manager = TestManager(args.group)
+    comms_manager = TestManager(int(args.group))
 
     # Programmor Adapter API function
     api = API(comms_manager)

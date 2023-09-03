@@ -13,7 +13,7 @@ class TestDevice:
             name: str,
             device_id: str,
             id: int = 2,
-            registry_id: int = 1,
+            registry_id: int = 0x3E9, # 1001
             serial_number: int = 123456789,
             shares_version: int = 1,
             firmware_version: int = 202308) -> None:
