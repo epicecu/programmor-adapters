@@ -13,7 +13,7 @@ class TestDevice:
             name: str,
             device_id: str,
             id: int = 2,
-            registry_id: int = 0x3E9, # 1001
+            registry_id: int = 0x3E9,  # 1001
             serial_number: int = 123456789,
             shares_version: int = 1,
             firmware_version: int = 202308) -> None:
@@ -74,7 +74,8 @@ class TestDevice:
                 testMessage.startingNumber = self.counter_start
                 testMessage.endingNumber = self.counter_end
                 testMessage.counter = self.counter
-                self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 1, inMessage.token, testMessage.SerializeToString()).SerializeToString()))
+                self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 1, inMessage.token,
+                                          testMessage.SerializeToString()).SerializeToString()))
 
             elif inMessage.shareId == 2:
                 # Share2 request
@@ -83,13 +84,15 @@ class TestDevice:
                 testMessage.digitalOutputPinId = 102
                 testMessage.analogInputAPinId = 103
                 testMessage.analogInputBPinId = 104
-                self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 2, inMessage.token, testMessage.SerializeToString()).SerializeToString()))
+                self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 2, inMessage.token,
+                                          testMessage.SerializeToString()).SerializeToString()))
 
             elif inMessage.shareId == 3:
                 # Share2 request
                 testMessage: test_pb2.TestMessage = test_pb2.Share3()  # type: ignore
                 testMessage.loopsPerSecond = int(time.perf_counter())
-                self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 3, inMessage.token, testMessage.SerializeToString()).SerializeToString()))
+                self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 3, inMessage.token,
+                                          testMessage.SerializeToString()).SerializeToString()))
 
         elif inMessage.action == transaction_pb2.TransactionMessage.SHARE_PUBLISH:  # type: ignore
             # Share publish
