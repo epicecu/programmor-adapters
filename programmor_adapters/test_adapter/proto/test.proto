@@ -1,9 +1,23 @@
 syntax = "proto3";
 
-// These Shares can be unique to this device.
+// These Shares are unique to this device.
+
 // Test Request and Publish
-message Share1 { // General device params
+message Share1 {
     fixed32 startingNumber = 1;
     fixed32 endingNumber = 2;
     fixed32 counter = 3; // Counts up each second from the starting number to the ending number
+}
+
+// Test device wiring configuration
+message Share2 {
+    fixed32 frequencyInputPinId = 1;
+    fixed32 digitalOutputPinId = 2;
+    fixed32 analogInputAPinId = 3;
+    fixed32 analogInputBPinId = 4;
+}
+
+// Test device meta data
+message Share3 {
+    fixed32 loopsPerSecond = 1;
 }
