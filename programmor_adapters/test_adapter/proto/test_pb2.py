@@ -13,17 +13,18 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n1programmor_adapters/test_adapter/proto/test.proto\"G\n\x06Share1\x12\x16\n\x0estartingNumber\x18\x01 \x01(\x07\x12\x14\n\x0c\x65ndingNumber\x18\x02 \x01(\x07\x12\x0f\n\x07\x63ounter\x18\x03 \x01(\x07\"w\n\x06Share2\x12\x1b\n\x13\x66requencyInputPinId\x18\x01 \x01(\x07\x12\x1a\n\x12\x64igitalOutputPinId\x18\x02 \x01(\x07\x12\x19\n\x11\x61nalogInputAPinId\x18\x03 \x01(\x07\x12\x19\n\x11\x61nalogInputBPinId\x18\x04 \x01(\x07\" \n\x06Share3\x12\x16\n\x0eloopsPerSecond\x18\x01 \x01(\x07\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n1programmor_adapters/test_adapter/proto/test.proto\"G\n\x06Share1\x12\x16\n\x0estartingNumber\x18\x01 \x01(\x0f\x12\x14\n\x0c\x65ndingNumber\x18\x02 \x01(\x0f\x12\x0f\n\x07\x63ounter\x18\x03 \x01(\x0f\"w\n\x06Share2\x12\x1b\n\x13\x66requencyInputPinId\x18\x01 \x01(\x07\x12\x1a\n\x12\x64igitalOutputPinId\x18\x02 \x01(\x07\x12\x19\n\x11\x61nalogInputAPinId\x18\x03 \x01(\x07\x12\x19\n\x11\x61nalogInputBPinId\x18\x04 \x01(\x07\" \n\x06Share3\x12\x16\n\x0eloopsPerSecond\x18\x01 \x01(\x07\x62\x06proto3')
 
-_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'programmor_adapters.test_adapter.proto.test_pb2', globals())
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'programmor_adapters.test_adapter.proto.test_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _SHARE1._serialized_start=53
-  _SHARE1._serialized_end=124
-  _SHARE2._serialized_start=126
-  _SHARE2._serialized_end=245
-  _SHARE3._serialized_start=247
-  _SHARE3._serialized_end=279
+  _globals['_SHARE1']._serialized_start=53
+  _globals['_SHARE1']._serialized_end=124
+  _globals['_SHARE2']._serialized_start=126
+  _globals['_SHARE2']._serialized_end=245
+  _globals['_SHARE3']._serialized_start=247
+  _globals['_SHARE3']._serialized_end=279
 # @@protoc_insertion_point(module_scope)

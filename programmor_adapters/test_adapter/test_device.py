@@ -26,7 +26,7 @@ class TestDevice:
         self.shares_version = shares_version
         self.firmware_version = firmware_version
         # Share 1: Counter
-        self.counter_start: int = 0
+        self.counter_start: int = -5
         self.counter_end: int = 100
         self.counter: int = self.counter_start
         # Device

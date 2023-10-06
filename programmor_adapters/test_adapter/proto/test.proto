@@ -4,9 +4,9 @@ syntax = "proto3";
 
 // Test Request and Publish
 message Share1 {
-    fixed32 startingNumber = 1;
-    fixed32 endingNumber = 2;
-    fixed32 counter = 3; // Counts up each second from the starting number to the ending number
+    sfixed32 startingNumber = 1;
+    sfixed32 endingNumber = 2;
+    sfixed32 counter = 3; // Counts up each second from the starting number to the ending number
 }
 
 // Test device wiring configuration

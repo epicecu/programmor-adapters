@@ -15,15 +15,16 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n2programmor_adapters/shared/proto/transaction.proto\"\x8c\x02\n\x12TransactionMessage\x12\r\n\x05token\x18\x01 \x01(\x07\x12*\n\x06\x61\x63tion\x18\x02 \x01(\x0e\x32\x1a.TransactionMessage.Action\x12\x0f\n\x07shareId\x18\x03 \x01(\x07\x12\x12\n\ndataLength\x18\x04 \x01(\x07\x12\x0c\n\x04\x64\x61ta\x18\x05 \x01(\x0c\"\x87\x01\n\x06\x41\x63tion\x12\x06\n\x02NA\x10\x00\x12\x12\n\x0e\x43OMMON_REQUEST\x10\x01\x12\x12\n\x0e\x43OMMON_PUBLISH\x10\x02\x12\x13\n\x0f\x43OMMON_RESPONSE\x10\x03\x12\x11\n\rSHARE_REQUEST\x10\x04\x12\x11\n\rSHARE_PUBLISH\x10\x05\x12\x12\n\x0eSHARE_RESPONSE\x10\x06\"\x83\x01\n\x07\x43ommon1\x12\n\n\x02id\x18\x01 \x01(\x07\x12\x12\n\nregistryId\x18\x02 \x01(\x07\x12\x14\n\x0cserialNumber\x18\x03 \x01(\x07\x12\x15\n\rsharesVersion\x18\x04 \x01(\x07\x12\x17\n\x0f\x66irmwareVersion\x18\x05 \x01(\x07\x12\x12\n\ndeviceName\x18\x06 \x01(\tb\x06proto3')
 
-_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'programmor_adapters.shared.proto.transaction_pb2', globals())
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'programmor_adapters.shared.proto.transaction_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _TRANSACTIONMESSAGE._serialized_start=55
-  _TRANSACTIONMESSAGE._serialized_end=323
-  _TRANSACTIONMESSAGE_ACTION._serialized_start=188
-  _TRANSACTIONMESSAGE_ACTION._serialized_end=323
-  _COMMON1._serialized_start=326
-  _COMMON1._serialized_end=457
+  _globals['_TRANSACTIONMESSAGE']._serialized_start=55
+  _globals['_TRANSACTIONMESSAGE']._serialized_end=323
+  _globals['_TRANSACTIONMESSAGE_ACTION']._serialized_start=188
+  _globals['_TRANSACTIONMESSAGE_ACTION']._serialized_end=323
+  _globals['_COMMON1']._serialized_start=326
+  _globals['_COMMON1']._serialized_end=457
 # @@protoc_insertion_point(module_scope)
