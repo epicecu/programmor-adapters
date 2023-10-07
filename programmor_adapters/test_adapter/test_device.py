@@ -5,6 +5,10 @@ from shared.types import MessageType
 import test_adapter.proto.test_pb2 as test_pb2
 from shared.api import TRANSACTION_MESSAGE_SIZE, DATA_MAX_SIZE
 
+# Logging
+import logging
+logger = logging.getLogger(__name__)
+
 
 class TestDevice:
 
@@ -26,8 +30,8 @@ class TestDevice:
         self.shares_version = shares_version
         self.firmware_version = firmware_version
         # Share 1: Counter
-        self.counter_start: int = -5
-        self.counter_end: int = 100
+        self.counter_start: int = 0
+        self.counter_end: int = 20
         self.counter: int = self.counter_start
         # Device
         self.elapsed_time: float = 0
@@ -100,7 +104,8 @@ class TestDevice:
             testMessage: test_pb2.TestMessage = test_pb2.Share1()  # type: ignore
             try:
                 testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
-            except BaseException:
+            except BaseException as e:
+                logger.error("Failed to parse message", e)
                 return
             # Process message
             self.counter_start = testMessage.startingNumber
