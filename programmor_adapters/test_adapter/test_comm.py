@@ -69,7 +69,7 @@ class TestComm(threading.Thread):
             self.process_outgoing_data()
 
             # Sleep the thread
-            # sleep(0.0001)  # 0.1ms
+            sleep(0.0001)  # 0.1ms
 
     def process_incoming_data(self) -> ProcessState:
         # Read data
