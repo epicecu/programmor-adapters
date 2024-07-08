@@ -69,8 +69,8 @@ install-dev:
 .PHONY: installer
 installer:
 	@echo "Creating intaller files"
-	@. ./$(VENV)/bin/activate
-	pyinstaller ./programmor_adapters/usb_adapter/main.py --name usb_adapter --onefile
+	@. ./$(VENV)/bin/activate; \
+	pyinstaller ./programmor_adapters/usb_adapter/main.py --name usb_adapter --onefile; \
 	pyinstaller ./programmor_adapters/test_adapter/main.py --name test_adapter --onefile
 
 # help: style					- fixes the project style
