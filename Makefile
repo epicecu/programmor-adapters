@@ -2,7 +2,7 @@
 # help:	Programmor-Adapter An adapter software for Programmor GUI
 # help:
 
-PYTHON_VERSION = python3.11
+PYTHON_VERSION = python3
 
 VENV = venv
 PYTHON = $(VENV)/bin/python3
@@ -20,21 +20,21 @@ run-usb:
 	@. ./$(VENV)/bin/activate
 	$(PYTHON) -m usb_adapter
 
-# help: run-test1					- starts the application
+# help: run-test1				- starts the application
 .PHONY: run-test1
 run-test1:
 	@echo "Starting Programmor Test Adapter 1"
 	@. ./$(VENV)/bin/activate
 	$(PYTHON) -m test_adapter -g 1 -ps 5101 -pr 8101
 
-# help: run-test2					- starts the application
+# help: run-test2				- starts the application
 .PHONY: run-test2
 run-test2:
 	@echo "Starting Programmor Test Adapter 2"
 	@. ./$(VENV)/bin/activate
 	$(PYTHON) -m test_adapter -g 2 -ps 5102 -pr 8102
 
-# help: run-test3					- starts the application
+# help: run-test3				- starts the application
 .PHONY: run-test3
 run-test3:
 	@echo "Starting Programmor Test Adapter 3"
@@ -64,18 +64,19 @@ install-dev:
 	@make install
 	@$(PIP) install -r requirements_dev.txt
 
-# help: installer					- creates installer exe's
+# help: installer				- creates installer exe's
 # Note: Pyinstaller need the python dev shared libs installed. Use `apt-get install python3.11-dev`
 .PHONY: installer
 installer:
 	@echo "Creating intaller files"
 	@. ./$(VENV)/bin/activate
 	pyinstaller ./programmor_adapters/usb_adapter/main.py --name usb_adapter --onefile
+	pyinstaller ./programmor_adapters/test_adapter/main.py --name test_adapter --onefile
 
 # help: style					- fixes the project style
 .PHONY: style
 style:
-	@echo "Apply styles to source code"
+	@echo "Apply styles to source code"; \
 	@find programmor_adapters -path "*proto*" -prune -o -path "*include*" -prune -o -type f -name '*.py' -exec autopep8 --in-place '{}' \;
 
 # help: check-style				- checks the project style
@@ -93,7 +94,7 @@ check-type:
 test:
 	pytest
 
-# help: tox					- runs the tox test suit
+# help: tox						- runs the tox test suit
 .PHONY: tox
 tox:
 	tox
@@ -101,6 +102,7 @@ tox:
 # help: proto					- compiles the protobug file (Only for testing purposes)
 .PHONY: proto
 proto:
+	@. ./$(VENV)/bin/activate
 	@find programmor_adapters/shared/proto -name '*.proto' -exec protoc --python_out=. programmor_adapters/shared/proto/transaction.proto \;
 	@find programmor_adapters/test_adapter/proto -name '*.proto' -exec protoc --python_out=. programmor_adapters/test_adapter/proto/test.proto \;
 
