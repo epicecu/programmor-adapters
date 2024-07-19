@@ -1,121 +1,81 @@
-# import gevent.monkey
-# gevent.monkey.patch_all()
-
+import threading
+from typing import Any, List, Callable
 from shared.endpoint import Endpoint
 from shared.api import API
 from shared.types import MessageType, ResponseType
-from threading import Lock
-from flask import Flask
-from flask_socketio import SocketIO, Namespace, emit
-from engineio.async_drivers import gevent  # noqa: F401
+
+import asyncio
+import uvicorn
+import json
 import base64
 import queue
+from starlette.applications import Starlette
+from starlette.endpoints import WebSocketEndpoint
+from starlette.routing import WebSocketRoute
+from starlette.websockets import WebSocket
+from starlette.middleware import Middleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 # Logging
 import logging
 logger = logging.getLogger(__name__)
 
-thread = None
-thread_lock = Lock()
-thread_stop_signal = False
-message_data_queue: queue.Queue[ResponseType] = queue.Queue()
-
-
-def background_thread(socket: SocketIO):
-    """Example of how to send server generated events to clients."""
-    while True:
-        if thread_stop_signal:
-            break
-        socket.sleep(0.001)  # 1ms
-        try:
-            response: ResponseType = message_data_queue.get(block=False)
-            socket.emit('message_data', response, namespace='/api')
-        except queue.Empty:
-            pass
-
 
 class SocketEndpoint(Endpoint):
 
     """Socket Endpoint
-    Provides a SocketIO API endpoint for applications to interface with Programmor
+    Provides a Socket API endpoint for applications to interface with Programmor
     compatible devices.
     """
 
-    class ApiNamespace(Namespace):
+    encoding = "text"
 
-        """ API Reference
-        """
+    class ApiNamespace(WebSocketEndpoint):
         api: API
-        socket: SocketIO
+        ws_connections: List[WebSocket]
+        emit: Callable
 
-        """Socket Namespace
-        """
-
-        def on_connect(self):
-            """Client Connects
-            """
-            logger.info("Socket client connected")
-            global thread
-            with thread_lock:
-                if thread is None:
-                    logger.debug("thread created")
-                    thread = self.socket.start_background_task(background_thread, self.socket)
-
-        def on_disconnect(self):
-            """Client Disconnects
-            """
-            logger.info("Socket client disconnected")
-            # Stop the emit thread
-            global thread_stop_signal
-            thread_stop_signal = True
-            self.socket.sleep(0.1)
-            thread_stop_signal = False
-            global thread
-            with thread_lock:
-                thread = None
-            self.api.disconnect_all_devices()
-
-        def on_get_devices(self, _):
+        async def get_devices(self, _):
             """Get Devices
             """
-            emit('devices', self.api.get_devices())
+            await self.emit('devices', self.api.get_devices())
 
-        def on_get_devices_detailed(self, _):
+        async def get_devices_detailed(self, _):
             """Get Devices Detailed
             """
-            emit('devices_detailed', self.api.get_devices_detailed())
+            await self.emit('devices_detailed', self.api.get_devices_detailed())
 
-        def on_check_status(self, device_id: str):
+        async def check_status(self, device_id: str):
             """Check Status
 
             :param device_id: A Programmor compatible device id
             :type device_id: str
             """
-            emit('status', self.api.check_device(device_id))
+            await self.emit('status', self.api.check_device(device_id))
 
-        def on_connect_device(self, device_id: str):
+        async def connect_device(self, device_id: str):
             """Connect Devices
 
             :param device_id: A Programmor compatible device id
             :type device_id: str
             """
             if self.api.connect_device(device_id):
-                emit('connected', device_id)
+                await self.emit('connected', device_id)
             else:
-                emit('connected_failed', device_id)
+                await self.emit('connected_failed', device_id)
 
-        def on_disconnect_device(self, device_id: str):
+        async def disconnect_device(self, device_id: str):
             """Disconnect Device
 
             :param device_id: A Programmor compatible device id
             :type device_id: str
             """
             if self.api.disconnect_device(device_id):
-                emit('disconnected', device_id)
+                await self.emit('disconnected', device_id)
             else:
-                emit('disconnected_failed', device_id)
+                await self.emit('disconnected_failed', device_id)
 
-        def on_request_common(self, device_id: str, share_id: int):
+        def request_common(self, device_id: str, share_id: int):
             """Request Common Message
 
             :param device_id: A Programmor compatible device id
@@ -125,7 +85,7 @@ class SocketEndpoint(Endpoint):
             """
             self.api.request_message(device_id, MessageType.COMMON, share_id)
 
-        def on_publish_common(self, device_id: str, share_id: int, data_urlfriendly: str):
+        def publish_common(self, device_id: str, share_id: int, data_urlfriendly: str):
             """Publish Common Message
             The data should be encoded using a base64 url friendly function
 
@@ -139,7 +99,7 @@ class SocketEndpoint(Endpoint):
             data = base64.urlsafe_b64decode(data_urlfriendly)
             self.api.publish_message(device_id, MessageType.COMMON, share_id, data)
 
-        def on_set_scheduled_common(self, device_id: str, share_id: int, interval: int):
+        def set_scheduled_common(self, device_id: str, share_id: int, interval: int):
             """Set Scheduled Common Message
 
             :param device_id: A Programmor compatible device id
@@ -151,7 +111,7 @@ class SocketEndpoint(Endpoint):
             """
             self.api.set_scheduled_message(device_id, MessageType.COMMON, share_id, interval)
 
-        def on_clear_scheduled_common(self, device_id: str, share_id: int):
+        def clear_scheduled_common(self, device_id: str, share_id: int):
             """Clear Scheduled Common Message
 
             :param device_id: A Programmor compatible device id
@@ -161,7 +121,7 @@ class SocketEndpoint(Endpoint):
             """
             self.api.clear_scheduled_message(device_id, MessageType.COMMON, share_id)
 
-        def on_request_share(self, device_id: str, share_id: int):
+        def request_share(self, device_id: str, share_id: int):
             """Request Share
 
             :param device_id: A Programmor compatible device id
@@ -171,7 +131,7 @@ class SocketEndpoint(Endpoint):
             """
             self.api.request_message(device_id, MessageType.SHARE, share_id)
 
-        def on_publish_share(self, device_id: str, share_id: int, data_urlfriendly: str):
+        def publish_share(self, device_id: str, share_id: int, data_urlfriendly: str):
             """Publish Share
             The data should be encoded using a base64 url friendly function
 
@@ -185,7 +145,7 @@ class SocketEndpoint(Endpoint):
             data = base64.b64decode(data_urlfriendly)
             self.api.publish_message(device_id, MessageType.SHARE, share_id, data)
 
-        def on_set_scheduled_share(self, device_id: str, share_id: int, interval: int):
+        def set_scheduled_share(self, device_id: str, share_id: int, interval: int):
             """Set Scheduled Share Message
 
             :param device_id: A Programmor compatible device id
@@ -197,7 +157,7 @@ class SocketEndpoint(Endpoint):
             """
             self.api.set_scheduled_message(device_id, MessageType.SHARE, share_id, interval)
 
-        def on_clear_scheduled_share(self, device_id: str, share_id: int):
+        def clear_scheduled_share(self, device_id: str, share_id: int):
             """Clear Scheduled Share Message
 
             :param device_id: A Programmor compatible device id
@@ -207,30 +167,97 @@ class SocketEndpoint(Endpoint):
             """
             self.api.clear_scheduled_message(device_id, MessageType.SHARE, share_id)
 
-    """SocketIO Endpoint; This is a singleton
-    """
+        async def on_connect(self, websocket):
+            logger.info(f'Websocket: Connected {websocket.url}')
+            self.event_loop = asyncio.get_event_loop()
+            self.ws_connections.append(websocket)
+            await websocket.accept()
 
-    def __init__(self, app: Flask, api: API, port: int) -> None:
-        super().__init__(app, api, port)
-        self.socket: SocketIO = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")
-        self.ns = self.ApiNamespace('/api')
-        self.ns.api = api
-        self.ns.socket = self.socket
-        self.ns.api.register_callback(lambda data: self.emit_data(data))
-        self.socket.on_namespace(self.ns)
+        async def on_disconnect(self, websocket, close_code):
+            logger.info(f'Websocket: Disconnected {websocket.url}')
+            self.api.disconnect_all_devices()
+            self.ws_connections.remove(websocket)
+
+        async def on_receive(self, websocket, data):
+            message = json.loads(data)
+            print('on_receive')
+            print(message)
+            eventName: str = message['event']
+            args: List[Any] = message['args']
+            if hasattr(self, eventName):
+                f = getattr(self, eventName)
+                if callable(f):
+                    try:
+                        if asyncio.iscoroutinefunction(f):
+                            send_back = await f(*args)
+                        else:
+                            send_back = f(*args)
+                        if send_back:
+                            self.emit(send_back)
+                    except Exception as e:
+                        logger.debug('on_receive: Failed to parse route and args')
+                        logger.debug(data)
+                        logger.debug(e)
+
+    """Socket Endpoint; This is a singleton
+    """
+    def __init__(self, api: API, port: int) -> None:
+        Endpoint.__init__(self, api, port)
+        # WebSocketEndpoint.__init__(self)
+        middleware = [
+            Middleware(
+                TrustedHostMiddleware,
+                allowed_hosts=['*'],
+            ),
+        ]
+        routes = [WebSocketRoute('/', self.ApiNamespace)]
+        self.ws_connections: List[WebSocket] = []
+        self.ApiNamespace.ws_connections = self.ws_connections
+        self.ApiNamespace.api = api
+        self.ApiNamespace.emit = self.emit
+        api.register_callback(lambda data: self.emit_data(data))
+        self.app = Starlette(routes=routes, middleware=middleware, on_startup=[self.start_thread])
+        self.message_queue = queue.Queue()
+        self.stop_event = threading.Event()
+        logger.info('Websocket Endpoint Started')
+
+    def start_thread(self):
+        self.event_loop = asyncio.get_event_loop()
+        self.sender_thread = threading.Thread(target=self.send_messages, args=(None, self.event_loop))
+        self.sender_thread.start()
+
+    def send_messages(self, _, event_loop):
+        while not self.stop_event.is_set():
+            try:
+                # Get message from queue with timeout to check for stop event
+                message = self.message_queue.get(timeout=1)
+                asyncio.run_coroutine_threadsafe(self.emit('message_data', message), event_loop)
+            except queue.Empty:
+                continue
+            except Exception as e:
+                print(f"Exception in send_messages thread: {e}")
 
     def emit_data(self, response: ResponseType) -> None:
         """Emit Data
         """
-        # self.ns.emit('message_data', response, namespace='/api')
-        message_data_queue.put(response)
+        self.message_queue.put(response)
+
+    async def emit(self, eventName: str, arg):
+        message = {'event': eventName, 'args': [arg]}
+        message_string = json.dumps(message)
+        for ws in self.ws_connections:
+            await ws.send_text(message_string)
+
+    async def test(self, a, b):
+        print('emit!')
 
     def start(self) -> None:
-        """Starts both the Flask, and the Socket app
+        """Starts the endpoint
         """
-        self.socket.run(self.app, host="0.0.0.0", port=self.port)
+        uvicorn.run(self.app, host="0.0.0.0", port=self.port, reload=False, log_level="info", workers=1, limit_concurrency=1, limit_max_requests=1)
 
-    def stop(self) -> None:
-        """Stops the application
+    async def stop(self) -> None:
+        """Stops the endpoint
         """
-        self.socket.stop()
+        for ws in self.ws_connections:
+            await ws.close()

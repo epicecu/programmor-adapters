@@ -110,6 +110,7 @@ class API(threading.Thread):
         # Close all connections
         for _, con in self.connections.items():
             con.stop()
+            con.join()
         # Stops the thread
         self.stop_flag = True
 

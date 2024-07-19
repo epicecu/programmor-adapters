@@ -165,7 +165,7 @@ export const useHmiStore = defineStore('hmi', {
             this.disconnectAll();
             let adapter = this.getAdapter(adapterId);
             if(adapter){
-              SocketSerivce.connectSocket(adapter.ipAddress, adapter.portNumber);
+              SocketSerivce.connectSocket(adapterId, adapter.ipAddress, adapter.portNumber);
               this.socketHandlers(adapter);
               adapter.connected = true;
               adapter.status = AdapterStatus.Connecting;
@@ -178,7 +178,7 @@ export const useHmiStore = defineStore('hmi', {
             console.log("Disconnecting from adatper "+adapterId);
             let adapter = this.getAdapter(adapterId);
             if(adapter){
-                SocketSerivce.disconnectSocket();
+                SocketSerivce.disconnectSocket(adapterId);
                 adapter.connected = false;
                 adapter.status = AdapterStatus.Disconencted;
                 this.connectedAdapter = -1;
@@ -196,27 +196,27 @@ export const useHmiStore = defineStore('hmi', {
         },
         socketHandlers(adapter: AdapterInfo){
             // Handles the Adapter connection
-            SocketSerivce.getSocket().on("connect", () => {
-                console.log("Connected to adapter "+adapter.adapterName + " sid: "+SocketSerivce.getSocket().id);
+            SocketSerivce.getSocket(adapter.adapterId).on("connect", () => {
+                console.log("Connected to adapter "+adapter.adapterName + " sid: "+SocketSerivce.getSocket(adapter.adapterId).id);
                 adapter.status = AdapterStatus.Connected;
                 this.updateAdapter(adapter);
             });
-            SocketSerivce.getSocket().on("disconnect", () => {
+            SocketSerivce.getSocket(adapter.adapterId).on("disconnect", () => {
                 console.log("Disconencted from adapter "+adapter.adapterName);
                 adapter.status = AdapterStatus.Disconencted;
                 this.updateAdapter(adapter);
             });
-            SocketSerivce.getSocket().on("error", () => {
+            SocketSerivce.getSocket(adapter.adapterId).on("error", () => {
                 console.log("An error occured with adapter "+adapter.adapterName);
                 adapter.status = AdapterStatus.Failed;
                 this.updateAdapter(adapter);
             });
-            SocketSerivce.getSocket().on("close", () => {
+            SocketSerivce.getSocket(adapter.adapterId).on("close", () => {
                 console.log("Lost connecteciton to adapter "+adapter.adapterName);
                 adapter.status = AdapterStatus.Unavailable;
                 this.updateAdapter(adapter);
             });
-            SocketSerivce.getSocket().on("connect_error", () => {
+            SocketSerivce.getSocket(adapter.adapterId).on("connect_error", () => {
                 console.log("Failed to connect to adapter "+adapter.adapterName);
                 adapter.status = AdapterStatus.Connecting;
                 this.unavailableCounter++;
@@ -228,7 +228,7 @@ export const useHmiStore = defineStore('hmi', {
                 }
             });
             // Handles the Device connection
-            SocketSerivce.getSocket().on("connected", (deviceId) => {
+            SocketSerivce.getSocket(adapter.adapterId).on("connected", (deviceId) => {
                 console.log("Adapter Connected to device "+deviceId);
                 let device = this.getDevice(deviceId)
                 if(device){
@@ -236,7 +236,7 @@ export const useHmiStore = defineStore('hmi', {
                     this.updateDevice(device);
                 }
             });
-            SocketSerivce.getSocket().on("disconnected", (deviceId) => {
+            SocketSerivce.getSocket(adapter.adapterId).on("disconnected", (deviceId) => {
                 console.log("Adapter Disconnected from device "+deviceId);
                 let device = this.getDevice(deviceId)
                 if(device){
@@ -244,7 +244,7 @@ export const useHmiStore = defineStore('hmi', {
                     this.updateDevice(device);
                 }
             });
-            SocketSerivce.getSocket().on("connected_failed", (deviceId) => {
+            SocketSerivce.getSocket(adapter.adapterId).on("connected_failed", (deviceId) => {
                 console.log("Adapter Failed to connect to device "+deviceId);
                 let device = this.getDevice(deviceId)
                 if(device){
@@ -252,7 +252,7 @@ export const useHmiStore = defineStore('hmi', {
                     this.updateDevice(device);
                 }
             });
-            SocketSerivce.getSocket().on("disconnected_failed", (deviceId) => {
+            SocketSerivce.getSocket(adapter.adapterId).on("disconnected_failed", (deviceId) => {
                 console.log("Adapter Failed to disconnect from device "+deviceId);
                 let device = this.getDevice(deviceId)
                 if(device){
@@ -261,7 +261,7 @@ export const useHmiStore = defineStore('hmi', {
                 }
             });
             // Handle API
-            SocketSerivce.getSocket().on("devices_detailed", (responseDevices) => {
+            SocketSerivce.getSocket(adapter.adapterId).on("devices_detailed", (responseDevices) => {
                 console.log("Handle devices_detailed", responseDevices);
                 // Clear devices
                 // this.devices = [] as DeviceInfo[];
@@ -282,7 +282,7 @@ export const useHmiStore = defineStore('hmi', {
                     console.log(device);
                 });
             }),
-            SocketSerivce.getSocket().on("message_data", (transactionData) => {
+            SocketSerivce.getSocket(adapter.adapterId).on("message_data", (transactionData) => {
                 console.log("On receive data: ", transactionData);
                 // Time to parse the data into a protobuf message
                 if(transactionData["actionType"] === ActionType.COMMON_RESPONSE){
@@ -321,7 +321,7 @@ export const useHmiStore = defineStore('hmi', {
         // Emits
         requestDetailedDevices(){
             if(this.getAdapter(this.connectedAdapter)?.status === AdapterStatus.Connected){
-                SocketSerivce.getSocket().emit("get_devices_detailed", "_");
+                SocketSerivce.getSocket(this.connectAdapter).emit("get_devices_detailed", "_");
             }
         },
         requestConnectDevice(deviceId: string){
@@ -330,7 +330,7 @@ export const useHmiStore = defineStore('hmi', {
                 device.status = DeviceStatus.Connecting;
                 this.updateDevice(device);
             }
-            SocketSerivce.getSocket().emit("connect_device", deviceId);
+            SocketSerivce.getSocket(this.connectedAdapter).emit("connect_device", deviceId);
         },
         requestDisconnectDevice(deviceId: string){
             let device = this.getDevice(deviceId)
@@ -338,28 +338,28 @@ export const useHmiStore = defineStore('hmi', {
                 device.status = DeviceStatus.Disconnecting;
                 this.updateDevice(device);
             }
-            SocketSerivce.getSocket().emit("disconnect_device", deviceId);
+            SocketSerivce.getSocket(this.connectedAdapter).emit("disconnect_device", deviceId);
         },
         requestCommon(deviceId: string, shareId: number){
-            SocketSerivce.getSocket().emit("request_common", deviceId, shareId);
+            SocketSerivce.getSocket(this.connectedAdapter).emit("request_common", deviceId, shareId);
         },
         requestShare(deviceId: string, shareId: number){
-            SocketSerivce.getSocket().emit("request_share", deviceId, shareId);
+            SocketSerivce.getSocket(this.connectedAdapter).emit("request_share", deviceId, shareId);
         },
         requestPublish(deviceId: string, shareId: number, data: JSON){
 
         },
         setCommonSchedule(deviceId: string, shareId: number, interval: number){
-            SocketSerivce.getSocket().emit("set_scheduled_common", deviceId, shareId, interval);
+            SocketSerivce.getSocket(this.connectedAdapter).emit("set_scheduled_common", deviceId, shareId, interval);
         },
         clearCommonSchedule(deviceId: string, shareId: number){
-            SocketSerivce.getSocket().emit("clear_scheduled_common", deviceId, shareId);
+            SocketSerivce.getSocket(this.connectedAdapter).emit("clear_scheduled_common", deviceId, shareId);
         },
         setShareSchedule(deviceId: string, shareId: number, interval: number){
-            SocketSerivce.getSocket().emit("set_scheduled_share", deviceId, shareId, interval);
+            SocketSerivce.getSocket(this.connectedAdapter).emit("set_scheduled_share", deviceId, shareId, interval);
         },
         clearShareSchedule(deviceId: string, shareId: number){
-            SocketSerivce.getSocket().emit("clear_scheduled_share", deviceId, shareId);
+            SocketSerivce.getSocket(this.connectedAdapter).emit("clear_scheduled_share", deviceId, shareId);
         },
         publishShare(deviceId: string, shareId: number, counterStart: number, counterEnd: number){
             const payload = {
@@ -371,7 +371,7 @@ export const useHmiStore = defineStore('hmi', {
             const data = Share1Message.encode(message).finish();
             var decoder = new TextDecoder('utf8');
             const base64 = window.btoa(decoder.decode(data));
-            SocketSerivce.getSocket().emit("publish_share", deviceId, shareId, base64);
+            SocketSerivce.getSocket(1).emit("publish_share", deviceId, shareId, base64);
         },
         // Others
         updateSelectedDevice(deviceId: string){

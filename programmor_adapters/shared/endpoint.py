@@ -1,13 +1,11 @@
 from shared.api import API
-from flask import Flask
 
 
 class Endpoint():
     """Endpoint Interface
     """
 
-    def __init__(self, app: Flask, api: API, port: int) -> None:
-        self.app = app
+    def __init__(self, api: API, port: int) -> None:
         self.api = api
         self.port = port
 

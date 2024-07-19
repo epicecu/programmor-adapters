@@ -1,11 +1,12 @@
+websockets
+starlette
+uvicorn
 protobuf
 grpcio-tools
 pyusb
 libusb_package
 tinydb
 typing_extensions
-Flask
-Flask-SocketIO
 flask-classful
 gevent
 gevent-websocket

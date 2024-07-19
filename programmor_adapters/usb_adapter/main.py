@@ -2,11 +2,9 @@ import sys
 import logging
 import argparse
 import os
-from flask import Flask
 
 from shared.api import API
 from shared.socket_endpoint import SocketEndpoint
-from shared.rest_endpoint import RestEndpoint
 
 from usb_adapter.usb_manager import USBManager
 
@@ -16,6 +14,14 @@ def main():
     # Setup argument parsing
 
     parser = argparse.ArgumentParser(description='An open source automotive tuning software usb adapter')
+
+    parser.add_argument(
+        "-pz",
+        "--port-zmq",
+        help="The zmq port to host on.",
+        required=False,
+        default=6101
+    )
 
     parser.add_argument(
         "-ps",
@@ -75,11 +81,7 @@ def main():
     logger.addHandler(stdHandler)
 
     # Start Application
-
     logger.info("Programmor USB Adaptation")
-
-    # Application to go here
-    # sys.exit(app.exec())
 
     # Comms manager
     comms_manager = USBManager()
@@ -88,29 +90,23 @@ def main():
     api = API(comms_manager)
     api.start()
 
-    # Flask application
-    app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'secret!ya'
-
     # Programmor Adapter Endpoints to the GUI
-    rest = RestEndpoint(app, api, args.port_rest)
-    socket = SocketEndpoint(app, api, args.port_socket)
+    socket = SocketEndpoint(api, int(args.port_socket))
+    socket.start()
 
-    # Starts the Socket-Flask, and Flask app
-    try:
-        socket.start()
-    except KeyboardInterrupt:
-        logger.info("Stopping Web Server")
+    # try:
+    #     while True:
+    #         time.sleep(0.1)  # Sleep to keep the main thread alive
+    # except KeyboardInterrupt:
+    #     print("\nExiting the program")
 
     # Stopping Adapter
     logger.info("Stopping Application")
     api.stop()
-    try:
-        socket.stop()
-        rest.stop()
-    except Exception as e:
-        logger.error("Failed to stop Socket or Rest apps")
-        logger.error(e)
+    socket.stop()
+
+    # Wait for threads to end
+    api.join()
 
 
 if __name__ == "__main__":
