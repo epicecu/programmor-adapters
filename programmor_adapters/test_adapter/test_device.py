@@ -1,8 +1,9 @@
 import time
+from datetime import datetime, timezone
 from typing import List, Optional
 import shared.proto.transaction_pb2 as transaction_pb2
-from shared.types import MessageType
 import test_adapter.proto.test_pb2 as test_pb2
+from shared.types import MessageType
 from shared.api import TRANSACTION_MESSAGE_SIZE, DATA_MAX_SIZE
 
 # Logging
@@ -33,6 +34,20 @@ class TestDevice:
         self.counter_start: int = 0
         self.counter_end: int = 20
         self.counter: int = self.counter_start
+        # Share 2: Wiring
+        self.frequency_input_pin_id: int = 101
+        self.digital_output_pin_id: int = 102
+        self.analog_input_a_pin_id: int = 103
+        self.analog_input_b_pin_id: int = 104
+        # Share 4: Welcome Text
+        self.welcome_text = "Hello there!"
+        # Share 5: General types
+        self.float_number = 23.45
+        self.double_number = 1.234567891011121314151617181920
+        self.ip_address = "192.168.1.5"
+        self.port_number = 8080
+        self.datetime_utc = datetime.now(timezone.utc).isoformat()
+        self.boolean_value = True
         # Device
         self.elapsed_time: float = 0
         self.outbound_data: List[bytes] = list()
@@ -84,10 +99,10 @@ class TestDevice:
             elif inMessage.shareId == 2:
                 # Share2 request
                 testMessage: test_pb2.TestMessage = test_pb2.Share2()  # type: ignore
-                testMessage.frequencyInputPinId = 101
-                testMessage.digitalOutputPinId = 102
-                testMessage.analogInputAPinId = 103
-                testMessage.analogInputBPinId = 104
+                testMessage.frequencyInputPinId = self.frequency_input_pin_id
+                testMessage.digitalOutputPinId = self.digital_output_pin_id
+                testMessage.analogInputAPinId = self.analog_input_a_pin_id
+                testMessage.analogInputBPinId = self.analog_input_b_pin_id
                 self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 2, inMessage.token,
                                           testMessage.SerializeToString()).SerializeToString()))
 
@@ -98,18 +113,83 @@ class TestDevice:
                 self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 3, inMessage.token,
                                           testMessage.SerializeToString()).SerializeToString()))
 
+            elif inMessage.shareId == 4:
+                # Share2 request
+                testMessage: test_pb2.TestMessage = test_pb2.Share4()  # type: ignore
+                testMessage.welcomeText = self.welcome_text
+                self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 4, inMessage.token,
+                                          testMessage.SerializeToString()).SerializeToString()))
+
+            elif inMessage.shareId == 5:
+                # Share2 request
+                testMessage: test_pb2.TestMessage = test_pb2.Share5()  # type: ignore
+                testMessage.floatNumber = self.float_number
+                testMessage.doubleNumber = self.double_number
+                testMessage.ipAddress = self.ip_address
+                testMessage.portNumber = self.port_number
+                testMessage.datetimeUtc = self.datetime_utc
+                testMessage.booleanValue = self.boolean_value
+                self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 5, inMessage.token,
+                                          testMessage.SerializeToString()).SerializeToString()))
+
         elif inMessage.action == transaction_pb2.TransactionMessage.SHARE_PUBLISH:  # type: ignore
-            # Share publish
-            inData: bytes = inMessage.data[0:inMessage.dataLength]
-            testMessage: test_pb2.TestMessage = test_pb2.Share1()  # type: ignore
-            try:
-                testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
-            except BaseException as e:
-                logger.error("Failed to parse message", e)
-                return
-            # Process message
-            self.counter_start = testMessage.startingNumber
-            self.counter_end = testMessage.endingNumber
+            if inMessage.shareId == 1:
+                # Share1 publish
+                inData: bytes = inMessage.data[0:inMessage.dataLength]
+                testMessage: test_pb2.TestMessage = test_pb2.Share1()  # type: ignore
+                try:
+                    testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
+                except BaseException as e:
+                    logger.error("Failed to parse message", e)
+                    return
+                # Process message
+                self.counter_start = testMessage.startingNumber
+                self.counter_end = testMessage.endingNumber
+
+            elif inMessage.shareId == 2:
+                # Share2 publish
+                inData: bytes = inMessage.data[0:inMessage.dataLength]
+                testMessage: test_pb2.TestMessage = test_pb2.Share2()  # type: ignore
+                try:
+                    testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
+                except BaseException as e:
+                    logger.error("Failed to parse message", e)
+                    return
+                # Process message
+                # Possible improvements: Check pin ids and prevent setting pin id more then once.
+                self.frequency_input_pin_id = testMessage.frequencyInputPinId
+                self.digital_output_pin_id = testMessage.digitalOutputPinId
+                self.analog_input_a_pin_id = testMessage.analogInputAPinId
+                self.analog_input_b_pin_id = testMessage.analogInputBPinId
+
+            elif inMessage.shareId == 4:
+                # Share4 publish
+                inData: bytes = inMessage.data[0:inMessage.dataLength]
+                testMessage: test_pb2.TestMessage = test_pb2.Share4()  # type: ignore
+                try:
+                    testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
+                except BaseException as e:
+                    logger.error("Failed to parse message", e)
+                    return
+                # Process message
+                self.counter_start = testMessage.welcomeText
+
+            elif inMessage.shareId == 5:
+                # Share5 publish
+                inData: bytes = inMessage.data[0:inMessage.dataLength]
+                testMessage: test_pb2.TestMessage = test_pb2.Share5()  # type: ignore
+                try:
+                    testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
+                except BaseException as e:
+                    logger.error("Failed to parse message", e)
+                    return
+                # Process message
+                self.float_number = testMessage.floatNumber
+                self.double_number = testMessage.doubleNumber
+                self.ip_address = testMessage.ipAddress
+                self.port_number = testMessage.portNumber
+                self.datetime_utc = testMessage.datetimeUtc
+                self.boolean_value = testMessage.booleanValue
 
     # Get Data
     # Test Device -> Adapter
