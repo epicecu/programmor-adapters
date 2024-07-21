@@ -90,6 +90,8 @@ class TestDevice:
             if inMessage.shareId == 1:
                 # Share1 request
                 testMessage: test_pb2.TestMessage = test_pb2.Share1()  # type: ignore
+                print(type(self.counter_start))
+                print(self.counter_start)
                 testMessage.startingNumber = self.counter_start
                 testMessage.endingNumber = self.counter_end
                 testMessage.counter = self.counter
@@ -127,7 +129,7 @@ class TestDevice:
                 testMessage.doubleNumber = self.double_number
                 testMessage.ipAddress = self.ip_address
                 testMessage.portNumber = self.port_number
-                testMessage.datetimeUtc = self.datetime_utc
+                testMessage.dateTime = self.datetime_utc
                 testMessage.booleanValue = self.boolean_value
                 self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 5, inMessage.token,
                                           testMessage.SerializeToString()).SerializeToString()))
@@ -172,7 +174,7 @@ class TestDevice:
                     logger.error("Failed to parse message", e)
                     return
                 # Process message
-                self.counter_start = testMessage.welcomeText
+                self.welcome_text = testMessage.welcomeText
 
             elif inMessage.shareId == 5:
                 # Share5 publish
@@ -188,7 +190,7 @@ class TestDevice:
                 self.double_number = testMessage.doubleNumber
                 self.ip_address = testMessage.ipAddress
                 self.port_number = testMessage.portNumber
-                self.datetime_utc = testMessage.datetimeUtc
+                self.datetime_utc = testMessage.dateTime
                 self.boolean_value = testMessage.booleanValue
 
     # Get Data
