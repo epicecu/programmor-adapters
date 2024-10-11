@@ -36,3 +36,15 @@ message Share5 {
     string dateTime = 5; // ISO 8601 format
     bool booleanValue = 6;
 }
+
+// Test Select/Combobox component
+message Share6 {
+    // Monday = 1
+    // Tuesday = 2
+    // Wednesday = 3
+    // Thursday = 4
+    // Friday = 5
+    // Saturday = 6
+    // Sunday = 7
+    sfixed32 dayOfTheWeek = 1;
+}

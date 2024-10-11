@@ -48,6 +48,8 @@ class TestDevice:
         self.port_number = 8080
         self.datetime_utc = datetime.now(timezone.utc).isoformat()
         self.boolean_value = True
+        # Share 6: Select/Combobox
+        self.day_of_the_week = 1  # Monday
         # Device
         self.elapsed_time: float = 0
         self.outbound_data: List[bytes] = list()
@@ -109,21 +111,21 @@ class TestDevice:
                                           testMessage.SerializeToString()).SerializeToString()))
 
             elif inMessage.shareId == 3:
-                # Share2 request
+                # Share3 request
                 testMessage: test_pb2.TestMessage = test_pb2.Share3()  # type: ignore
                 testMessage.loopsPerSecond = int(time.perf_counter())
                 self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 3, inMessage.token,
                                           testMessage.SerializeToString()).SerializeToString()))
 
             elif inMessage.shareId == 4:
-                # Share2 request
+                # Share4 request
                 testMessage: test_pb2.TestMessage = test_pb2.Share4()  # type: ignore
                 testMessage.welcomeText = self.welcome_text
                 self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 4, inMessage.token,
                                           testMessage.SerializeToString()).SerializeToString()))
 
             elif inMessage.shareId == 5:
-                # Share2 request
+                # Share5 request
                 testMessage: test_pb2.TestMessage = test_pb2.Share5()  # type: ignore
                 testMessage.floatNumber = self.float_number
                 testMessage.doubleNumber = self.double_number
@@ -132,6 +134,13 @@ class TestDevice:
                 testMessage.dateTime = self.datetime_utc
                 testMessage.booleanValue = self.boolean_value
                 self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 5, inMessage.token,
+                                          testMessage.SerializeToString()).SerializeToString()))
+
+            elif inMessage.shareId == 6:
+                # Share6 request
+                testMessage: test_pb2.TestMessage = test_pb2.Share6()  # type: ignore
+                testMessage.dayOfTheWeek = self.day_of_the_week
+                self.outbound_data.append(bytes(self.response_message(MessageType.SHARE, 6, inMessage.token,
                                           testMessage.SerializeToString()).SerializeToString()))
 
         elif inMessage.action == transaction_pb2.TransactionMessage.SHARE_PUBLISH:  # type: ignore
@@ -192,6 +201,18 @@ class TestDevice:
                 self.port_number = testMessage.portNumber
                 self.datetime_utc = testMessage.dateTime
                 self.boolean_value = testMessage.booleanValue
+
+            elif inMessage.shareId == 6:
+                # Share6 publish
+                inData: bytes = inMessage.data[0:inMessage.dataLength]
+                testMessage: test_pb2.TestMessage = test_pb2.Share6()  # type: ignore
+                try:
+                    testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
+                except BaseException as e:
+                    logger.error("Failed to parse message", e)
+                    return
+                # Process message
+                self.day_of_the_week = testMessage.dayOfTheWeek
 
     # Get Data
     # Test Device -> Adapter
