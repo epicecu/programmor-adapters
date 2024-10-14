@@ -25,14 +25,14 @@ run-usb:
 run-test1:
 	@echo "Starting Programmor Test Adapter 1"
 	@. ./$(VENV)/bin/activate
-	$(PYTHON) -m test_adapter -g 1 -ps 5101 -pr 8101
+	$(PYTHON) -m test_adapter -g 1 -ps 5101
 
 # help: run-test2				- starts the application
 .PHONY: run-test2
 run-test2:
 	@echo "Starting Programmor Test Adapter 2"
 	@. ./$(VENV)/bin/activate
-	$(PYTHON) -m test_adapter -g 2 -ps 5102 -pr 8102
+	$(PYTHON) -m test_adapter -g 2 -ps 5102
 
 # help: run-test3				- starts the application
 .PHONY: run-test3

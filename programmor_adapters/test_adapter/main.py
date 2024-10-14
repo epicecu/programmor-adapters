@@ -24,27 +24,11 @@ def main():
     )
 
     parser.add_argument(
-        "-pz",
-        "--port-zmq",
-        help="The zmq port to host on.",
-        required=False,
-        default=6101
-    )
-
-    parser.add_argument(
         "-ps",
         "--port-socket",
         help="The socket port to host on.",
         required=False,
         default=5101
-    )
-
-    parser.add_argument(
-        "-pr",
-        "--port-rest",
-        help="The REST port to host on.",
-        required=False,
-        default=8101
     )
 
     parser.add_argument(

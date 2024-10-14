@@ -16,27 +16,11 @@ def main():
     parser = argparse.ArgumentParser(description='An open source automotive tuning software usb adapter')
 
     parser.add_argument(
-        "-pz",
-        "--port-zmq",
-        help="The zmq port to host on.",
-        required=False,
-        default=6101
-    )
-
-    parser.add_argument(
         "-ps",
         "--port-socket",
         help="The socket port to host on.",
         required=False,
         default=5001
-    )
-
-    parser.add_argument(
-        "-pr",
-        "--port-rest",
-        help="The REST port to host on.",
-        required=False,
-        default=8001
     )
 
     parser.add_argument(
