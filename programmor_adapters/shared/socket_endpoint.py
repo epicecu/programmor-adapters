@@ -18,6 +18,8 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 # Logging
 import logging
+
+import uvicorn.config
 logger = logging.getLogger(__name__)
 
 
@@ -219,7 +221,7 @@ class SocketEndpoint(Endpoint):
         self.app = Starlette(routes=routes, middleware=middleware, on_startup=[self.start_thread])
         self.message_queue = queue.Queue()
         self.stop_event = threading.Event()
-        logger.info('Websocket Endpoint Started')
+        logger.debug('Websocket Endpoint Initialised')
 
     def start_thread(self):
         self.event_loop = asyncio.get_event_loop()
@@ -235,7 +237,7 @@ class SocketEndpoint(Endpoint):
             except queue.Empty:
                 continue
             except Exception as e:
-                print(f"Exception in send_messages thread: {e}")
+                logger.error(f"Exception in send_messages thread: {e}")
 
     def emit_data(self, response: ResponseType) -> None:
         """Emit Data
@@ -248,13 +250,27 @@ class SocketEndpoint(Endpoint):
         for ws in self.ws_connections:
             await ws.send_text(message_string)
 
-    async def test(self, a, b):
-        print('emit!')
-
     def start(self) -> None:
         """Starts the endpoint
         """
-        uvicorn.run(self.app, host="0.0.0.0", port=self.port, reload=False, log_level="info", workers=1, limit_concurrency=1, limit_max_requests=1)
+        config = uvicorn.Config(self.app, host="0.0.0.0", port=self.port, reload=False, log_level="info", workers=1, limit_concurrency=1, limit_max_requests=1)
+        server = uvicorn.Server(config)
+
+        orig_log_started_message = server._log_started_message
+
+        def server_started(server):
+            for server in server.servers:
+                for socket in server.sockets:
+                    _, port = socket.getsockname()
+                    logger.info(f'port:{port}')
+
+        def patch_log_started_message(listeners):
+            orig_log_started_message(listeners)
+            server_started(server)
+
+        server._log_started_message = patch_log_started_message
+        server.run()
+        logger.debug('Starting socket endpoint')
 
     async def stop(self) -> None:
         """Stops the endpoint

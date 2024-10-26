@@ -101,12 +101,12 @@ class API(threading.Thread):
         """Starts the thread
         """
         threading.Thread.start(self)
-        logger.info("Starting Api Thread")
+        logger.debug("Starting API Thread")
 
     def stop(self) -> None:
         """Stops the thread
         """
-        logger.info("Stopping Api Thread")
+        logger.debug("Stopping API Thread")
         # Close all connections
         for _, con in self.connections.items():
             con.stop()
@@ -117,11 +117,11 @@ class API(threading.Thread):
     def run(self) -> None:
         """Run method used by python threading
         """
-        logger.info("API Thread Running...")
+        logger.debug("API Thread Running...")
         while True:
             # Stop thread
             if self.stop_flag:
-                logger.info("API Thread Stopped")
+                logger.debug("API Thread Stopped")
                 break
 
             # Process logic
@@ -163,11 +163,11 @@ class API(threading.Thread):
             schedule.share_id = shareId
             schedule.interval_ms = interval_ms
             self.scheduled.append(schedule)
-            logger.info(f"Added schedule {shareId} {interval_ms}")
+            logger.debug(f"Added schedule {shareId} {interval_ms}")
         else:
             # Update the schedule
             schedule.update_interval(interval_ms)
-            logger.info(f"Updated schedule {shareId} {interval_ms}")
+            logger.debug(f"Updated schedule {shareId} {interval_ms}")
 
     def clear_scheduled_message(self, device_id: str, message_type: MessageType, shareId: int) -> None:
         """Clear Scheduled Message
@@ -181,7 +181,7 @@ class API(threading.Thread):
                         device_id and schedule.message_type == message_type, self.scheduled), None)
         if schedule is not None:
             self.scheduled.remove(schedule)
-            logger.info(f"Removed schedule {shareId}")
+            logger.debug(f"Removed schedule {shareId}")
 
     def clear_all_schedules(self, device_id: str) -> None:
         """Clear All Schedules
@@ -349,7 +349,7 @@ class API(threading.Thread):
         record.device_id = device_id
         record.sent_at = datetime.now()
         self.transactions.append(record)
-        logger.info(record)
+        logger.debug(record)
         # Convert message to bytes
         publish_message_bytes = publish_message.SerializeToString()
         # Send data
@@ -444,7 +444,7 @@ class API(threading.Thread):
         # Update transaction, then remove
         metadata: RequestRecord = filtered_transactions[0]
         metadata.received_at = datetime.now()
-        logger.info(metadata)
+        logger.debug(metadata)
         self.transactions.remove(metadata)
         # Save data to database
         # self.db.insert({"id": metadata.id, "device": device_id, "action": response.action, "shareId": response.shareId ,

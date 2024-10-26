@@ -121,5 +121,5 @@ class USBManager(CommsManager):
             self.connections[device_id].stop()
             del self.connections[device_id]
             return False
-        logger.info(f"Connected to device {device_id}")
+        logger.debug(f"Connected to device {device_id}")
         return True
