@@ -20,8 +20,8 @@ Linux/Mac
 sudo apt-get install -y libhidapi-dev
 
 ```bash
-git clone --branch master https://github.com/epicecu/programmor.git
-cd programmor
+git clone --branch master https://github.com/epicecu/programmor-adapters.git
+cd programmor-adapters
 make venv
 make install-dev
 ```
@@ -29,9 +29,9 @@ make install-dev
 Windows
 
 ```bash
-git clone --branch master https://github.com/epicecu/programmor.git
-cd programmor
-virtualenv venv
+git clone --branch master https://github.com/epicecu/programmor-adapters.git
+cd programmor-adapters
+python -m virtualenv venv
 venv\Scripts\activate
 pip install -e .
 pip install -r requirements.txt
