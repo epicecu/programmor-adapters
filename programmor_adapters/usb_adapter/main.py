@@ -2,6 +2,7 @@ import sys
 import logging
 import argparse
 import os
+import time
 
 from shared.api import API
 from shared.socket_endpoint import SocketEndpoint
@@ -76,13 +77,13 @@ def main():
 
     # Programmor Adapter Endpoints to the GUI
     socket = SocketEndpoint(api, int(args.port_socket))
-    socket.start()
 
-    # try:
-    #     while True:
-    #         time.sleep(0.1)  # Sleep to keep the main thread alive
-    # except KeyboardInterrupt:
-    #     print("\nExiting the program")
+    try:
+        socket.start()
+        while True:
+            time.sleep(0.1)  # Sleep to keep the main thread alive
+    except KeyboardInterrupt:
+        logger.info("User stopping Application")
 
     # Stopping Adapter
     logger.info("Stopping Application")
@@ -91,6 +92,8 @@ def main():
 
     # Wait for threads to end
     api.join()
+
+    logger.info("Exiting the program")
 
 
 if __name__ == "__main__":
