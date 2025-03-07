@@ -93,17 +93,3 @@ View the docs in the browser by running `make docsrun`
 ## License
 
 GPL V2 © [Programmor](https://github.com/epicecu/programmor)
-
-## Todo
-
-In no particular order
-
-1. Fix delay in message emits from Adapter to HMI - Fixed, thread now handles the server emits
-2. Test with multiple USB devices connected
-3. Test on Windows 10, 11 - Works with windows 11, swapped out hidapi to pyusb
-4. Test on Mac
-5. Increase code coverage with unit tests
-6. Update documentation
-7. Replace local database with sqlite
-8. Test packaged executable file on Linux
-9. Test packaged executable file on Windows
