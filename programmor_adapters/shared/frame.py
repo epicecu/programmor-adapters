@@ -106,8 +106,6 @@ class Frame:
             frame_bytes.extend(bytes(FRAME_PAYLOAD_SIZE-len(self.payload)))
         else:
             frame_bytes.extend(self.payload)
-        # Calculate checksum
-        self.crc = zlib.crc32(frame_bytes[0:60]) & 0xffffffff
         frame_bytes.extend(struct.pack("<I", self.crc))
         # Check if the
         return frame_bytes

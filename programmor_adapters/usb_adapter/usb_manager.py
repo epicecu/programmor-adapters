@@ -47,6 +47,9 @@ class USBManager(CommsManager):
                 assert dev.product is not None
             except Exception:
                 continue
+            # Skip STM32 Link V3
+            if dev.idVendor == 1155 and dev.idProduct == 14159:
+                continue
             # print(f"{dev.manufacturer} {dev.product}")
             # Check if the device is already in use
             device_id = self.get_device_id_from_vender_product(dev.idVendor, dev.idProduct)
@@ -66,20 +69,25 @@ class USBManager(CommsManager):
             request_frame_as_bytes = bytes(request_frame.to_bytes())
             # Send bytes
             try:
-                endpoint_out.write(request_frame_as_bytes, 1)
-            except usb.core.USBTimeoutError:
+                endpoint_out.write(request_frame_as_bytes, 100)
+            except usb.core.USBTimeoutError as e:
+                logger.debug(f"Write {dev.idVendor}:{dev.idProduct} Timeout {e}")
                 continue
-            except usb.core.USBError:
+            except usb.core.USBError as e:
+                logger.debug(f"Write {dev.idVendor}:{dev.idProduct} USB Error {e}")
                 continue
             # Read bytes
             try:
-                received = endpoint_in.read(64, 1)
-            except usb.core.USBTimeoutError:
+                received = endpoint_in.read(64, 100)
+            except usb.core.USBTimeoutError as e:
+                logger.debug(f"Read {dev.idVendor}:{dev.idProduct} Timeout {e}")
                 continue
-            except usb.core.USBError:
+            except usb.core.USBError as e:
+                logger.debug(f"Read {dev.idVendor}:{dev.idProduct} USB Error {e}")
                 continue
             # Convert bytes to Frame
             received_as_bytes = bytes(received)
+            received_frame = None
             try:
                 received_frame = Frame(received_as_bytes)
             except BytesLengthError as e:

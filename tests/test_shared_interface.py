@@ -50,7 +50,7 @@ def test_frame_to_bytes_then_from_bytes():
     frame.frameOrder = 1
     frame.frameTotal = 1
     frame.payload = bytes([x for x in range(FRAME_PAYLOAD_SIZE)])
-    frame.calculate_crc()
+    frame.checksum()
     # Generate bytes
     frame_as_bytes = frame.to_bytes()
     # Unpack an see if the result is correct
@@ -75,6 +75,7 @@ def test_comms_read_single_frame():
     com.set_received_message_callback(on_received_message)
     # Test data
     in_data = generate_frame()
+    in_data.checksum()
     com.incoming_buffer = in_data.to_bytes()
     # Test read function
     status = com.process_incoming_frames()
@@ -93,6 +94,7 @@ def test_comms_read_multiple_frames():
     # Test data frame 1 of 3
     in_data = generate_frame(0, FRAME_PAYLOAD_SIZE)
     in_data.frameTotal = 3
+    in_data.checksum()
     com.incoming_buffer = in_data.to_bytes()
     # Test read function
     status = com.process_incoming_frames()
@@ -101,6 +103,7 @@ def test_comms_read_multiple_frames():
     in_data = generate_frame(FRAME_PAYLOAD_SIZE, FRAME_PAYLOAD_SIZE*2)
     in_data.frameTotal = 3
     in_data.frameOrder = 2
+    in_data.checksum()
     com.incoming_buffer = in_data.to_bytes()
     # Test read function
     status = com.process_incoming_frames()
@@ -109,6 +112,7 @@ def test_comms_read_multiple_frames():
     in_data = generate_frame(FRAME_PAYLOAD_SIZE*2, FRAME_PAYLOAD_SIZE*3)
     in_data.frameTotal = 3
     in_data.frameOrder = 3
+    in_data.checksum()
     com.incoming_buffer = in_data.to_bytes()
     # Test read function
     status = com.process_incoming_frames()
@@ -130,6 +134,7 @@ def test_comms_read_multiple_frames_out_of_order():
     in_data = generate_frame(FRAME_PAYLOAD_SIZE, FRAME_PAYLOAD_SIZE*2)
     in_data.frameTotal = 3
     in_data.frameOrder = 2
+    in_data.checksum()
     com.incoming_buffer = in_data.to_bytes()
     # Test read function
     status = com.process_incoming_frames()
@@ -137,6 +142,7 @@ def test_comms_read_multiple_frames_out_of_order():
     # Test data frame 1 of 3
     in_data = generate_frame(0, FRAME_PAYLOAD_SIZE)
     in_data.frameTotal = 3
+    in_data.checksum()
     com.incoming_buffer = in_data.to_bytes()
     # Test read function
     status = com.process_incoming_frames()
@@ -145,6 +151,7 @@ def test_comms_read_multiple_frames_out_of_order():
     in_data = generate_frame(FRAME_PAYLOAD_SIZE*2, FRAME_PAYLOAD_SIZE*3)
     in_data.frameTotal = 3
     in_data.frameOrder = 3
+    in_data.checksum()
     com.incoming_buffer = in_data.to_bytes()
     # Test read function
     status = com.process_incoming_frames()

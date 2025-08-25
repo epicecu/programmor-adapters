@@ -34,7 +34,7 @@ class USB(Comm):
             return bytes(0)
         try:
             if self.device_endpoint_in is not None:
-                return bytes(self.device_endpoint_in.read(64, 1))
+                return bytes(self.device_endpoint_in.read(64, 100))
             else:
                 return bytes(0)
         except Exception:
@@ -44,7 +44,7 @@ class USB(Comm):
         if len(buffer) > 0 and self.device is None:
             return  # Not connected to device
         if self.device_endpoint_out is not None:
-            self.device_endpoint_out.write(bytes(buffer), 1)
+            self.device_endpoint_out.write(bytes(buffer), 100)
 
     def connect(self) -> bool:
         self.device: Optional[usb.core.Device] = libusb_package.find(idVendor=self.device_id_vender, idProduct=self.device_id_product)  # type: ignore
