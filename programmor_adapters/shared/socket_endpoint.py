@@ -269,11 +269,12 @@ class SocketEndpoint(Endpoint):
             server_started(server)
 
         server._log_started_message = patch_log_started_message
-        server.run()
         logger.debug('Starting socket endpoint')
+        server.run()
 
-    async def stop(self) -> None:
+    def stop(self) -> None:
         """Stops the endpoint
         """
+        self.stop_event.set()
         for ws in self.ws_connections:
-            await ws.close()
+            ws.close()

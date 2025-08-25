@@ -20,8 +20,8 @@ Linux/Mac
 sudo apt-get install -y libhidapi-dev
 
 ```bash
-git clone --branch master https://github.com/epicecu/programmor.git
-cd programmor
+git clone --branch master https://github.com/epicecu/programmor-adapters.git
+cd programmor-adapters
 make venv
 make install-dev
 ```
@@ -29,9 +29,9 @@ make install-dev
 Windows
 
 ```bash
-git clone --branch master https://github.com/epicecu/programmor.git
-cd programmor
-virtualenv venv
+git clone --branch master https://github.com/epicecu/programmor-adapters.git
+cd programmor-adapters
+python -m virtualenv venv
 venv\Scripts\activate
 pip install -e .
 pip install -r requirements.txt
@@ -93,17 +93,3 @@ View the docs in the browser by running `make docsrun`
 ## License
 
 GPL V2 © [Programmor](https://github.com/epicecu/programmor)
-
-## Todo
-
-In no particular order
-
-1. Fix delay in message emits from Adapter to HMI - Fixed, thread now handles the server emits
-2. Test with multiple USB devices connected
-3. Test on Windows 10, 11 - Works with windows 11, swapped out hidapi to pyusb
-4. Test on Mac
-5. Increase code coverage with unit tests
-6. Update documentation
-7. Replace local database with sqlite
-8. Test packaged executable file on Linux
-9. Test packaged executable file on Windows
