@@ -91,7 +91,7 @@ def main():
             time.sleep(0.1)  # Sleep to keep the main thread alive
     except KeyboardInterrupt:
         logger.info("User stopping Application")
-        
+
     # Stopping Adapter
     logger.info("Stopping Application")
     api.stop()

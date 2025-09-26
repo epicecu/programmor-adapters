@@ -35,7 +35,7 @@ class SocketEndpoint(Endpoint):
     class ApiNamespace(WebSocketEndpoint):
         api: API
         ws_connections: List[WebSocket]
-        emit: Callable
+        emit: Callable  # type: ignore
 
         async def get_devices(self, _):
             """Get Devices
@@ -219,7 +219,7 @@ class SocketEndpoint(Endpoint):
         self.ApiNamespace.emit = self.emit
         api.register_callback(lambda data: self.emit_data(data))
         self.app = Starlette(routes=routes, middleware=middleware, on_startup=[self.start_thread])
-        self.message_queue = queue.Queue()
+        self.message_queue: queue.Queue[ResponseType] = queue.Queue()
         self.stop_event = threading.Event()
         logger.debug('Websocket Endpoint Initialised')
 
@@ -268,7 +268,7 @@ class SocketEndpoint(Endpoint):
             orig_log_started_message(listeners)
             server_started(server)
 
-        server._log_started_message = patch_log_started_message
+        server._log_started_message = patch_log_started_message  # type: ignore
         logger.debug('Starting socket endpoint')
         server.run()
 
@@ -277,4 +277,4 @@ class SocketEndpoint(Endpoint):
         """
         self.stop_event.set()
         for ws in self.ws_connections:
-            ws.close()
+            ws.close()  # type: ignore

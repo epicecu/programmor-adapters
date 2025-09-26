@@ -63,11 +63,14 @@ class Comm(threading.Thread):
             # Process incoming messages
             self.process_incoming_frames()
 
+            # Sleep the thread
+            sleep(0.005)  # 5ms
+
             # Process outgoing messages
             self.process_outgoing_frames()
 
             # Sleep the thread
-            sleep(0.0001)  # 0.1ms
+            sleep(0.005)  # 5ms
 
     def process_incoming_frames(self) -> ProcessState:
         """Processes the incoming frames.
@@ -185,6 +188,7 @@ class Comm(threading.Thread):
             # Write data
             frame_data = frame.to_bytes()
             self.write(frame_data)
+            sleep(0.001)  # 1ms
 
         return ProcessState.OK
 

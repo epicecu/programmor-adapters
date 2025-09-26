@@ -128,7 +128,7 @@ class API(threading.Thread):
             self._process_scheduled_messages()
 
             # Sleep the thread
-            sleep(0.0001)  # 0.1ms
+            sleep(0.001)  # 0.1ms
 
     def _process_scheduled_messages(self) -> None:
         """Process Scheduled Messages

@@ -41,7 +41,9 @@ class USBManager(CommsManager):
             # Check if device is available
             if dev is None:
                 continue
-            # Check if meta data is available
+            # Skip keyboards and mice
+            if dev.bDeviceClass == 0x03:
+                continue
             try:
                 assert dev.manufacturer is not None
                 assert dev.product is not None
@@ -50,7 +52,7 @@ class USBManager(CommsManager):
             # Skip STM32 Link V3
             if dev.idVendor == 1155 and dev.idProduct == 14159:
                 continue
-            # print(f"{dev.manufacturer} {dev.product}")
+            print(f"{dev.manufacturer} {dev.product}")
             # Check if the device is already in use
             device_id = self.get_device_id_from_vender_product(dev.idVendor, dev.idProduct)
             if device_id:

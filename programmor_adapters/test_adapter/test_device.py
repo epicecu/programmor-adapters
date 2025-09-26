@@ -146,7 +146,7 @@ class TestDevice:
         elif inMessage.action == transaction_pb2.TransactionMessage.SHARE_PUBLISH:  # type: ignore
             if inMessage.shareId == 1:
                 # Share1 publish
-                inData: bytes = inMessage.data[0:inMessage.dataLength]
+                inData: bytes = inMessage.data[0:inMessage.dataLength]  # type: ignore
                 testMessage: test_pb2.TestMessage = test_pb2.Share1()  # type: ignore
                 try:
                     testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
@@ -159,7 +159,7 @@ class TestDevice:
 
             elif inMessage.shareId == 2:
                 # Share2 publish
-                inData: bytes = inMessage.data[0:inMessage.dataLength]
+                inData: bytes = inMessage.data[0:inMessage.dataLength]  # type: ignore
                 testMessage: test_pb2.TestMessage = test_pb2.Share2()  # type: ignore
                 try:
                     testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
@@ -175,7 +175,7 @@ class TestDevice:
 
             elif inMessage.shareId == 4:
                 # Share4 publish
-                inData: bytes = inMessage.data[0:inMessage.dataLength]
+                inData: bytes = inMessage.data[0:inMessage.dataLength]  # type: ignore
                 testMessage: test_pb2.TestMessage = test_pb2.Share4()  # type: ignore
                 try:
                     testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
@@ -187,7 +187,7 @@ class TestDevice:
 
             elif inMessage.shareId == 5:
                 # Share5 publish
-                inData: bytes = inMessage.data[0:inMessage.dataLength]
+                inData: bytes = inMessage.data[0:inMessage.dataLength]  # type: ignore
                 testMessage: test_pb2.TestMessage = test_pb2.Share5()  # type: ignore
                 try:
                     testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
@@ -204,7 +204,7 @@ class TestDevice:
 
             elif inMessage.shareId == 6:
                 # Share6 publish
-                inData: bytes = inMessage.data[0:inMessage.dataLength]
+                inData: bytes = inMessage.data[0:inMessage.dataLength]  # type: ignore
                 testMessage: test_pb2.TestMessage = test_pb2.Share6()  # type: ignore
                 try:
                     testMessage.ParseFromString(bytes(inData[0:DATA_MAX_SIZE]))
